@@ -8,10 +8,10 @@ export const dynamic = 'force-dynamic'
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions)
-  if (!session) redirect("/login")
+  if (!session?.user) redirect("/login")
   
   const org = await prisma.organization.findUnique({
-    where: { id: (session.user as any).organizationId }
+    where: { id: session.user.organizationId }
   })
   
   if (org?.onboardingCompleted) redirect("/dashboard")

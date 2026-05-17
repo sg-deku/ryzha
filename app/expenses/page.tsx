@@ -6,7 +6,7 @@ import Link from "next/link"
 
 export default async function ExpensesPage() {
   const session = await getServerSession(authOptions)
-  if (!session) redirect("/login")
+  if (!session?.user) redirect("/login")
 
   const expenses = await prisma.expense.findMany({
     where: { organizationId: session.user.organizationId },
