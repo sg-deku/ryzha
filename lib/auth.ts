@@ -1,7 +1,21 @@
-import { NextAuthOptions } from "next-auth"
+import { NextAuthOptions, DefaultSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "./prisma"
 import bcrypt from "bcrypt"
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+      organizationId: string
+    } & DefaultSession["user"]
+  }
+
+  interface User {
+    id: string
+    organizationId: string
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
