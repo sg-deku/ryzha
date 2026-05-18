@@ -82,6 +82,7 @@ function SortableRow({
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+          aria-label="Drag to reorder"
         >
           <GripVertical className="h-4 w-4" />
         </button>
@@ -128,6 +129,7 @@ function SortableRow({
             size="icon"
             className="h-7 w-7"
             onClick={() => onClone(item)}
+            aria-label="Clone item"
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
@@ -136,6 +138,7 @@ function SortableRow({
             size="icon"
             className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={() => onRemove(item.id)}
+            aria-label="Remove item"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>

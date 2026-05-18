@@ -2,12 +2,18 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { Upload, Brain, Sparkles, Filter, MoreHorizontal, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ButtonWithLoading } from "@/components/ui/button-with-loading"
 import { ExpenseTable } from "@/components/expenses/expense-table"
 import { AICategorizeProgress } from "@/components/expenses/ai-categorize-progress"
-import { CategoryChart } from "@/components/expenses/category-chart"
 import { Card, CardContent } from "@/components/ui/card"
+
+const CategoryChart = dynamic(() => import("@/components/expenses/category-chart").then(mod => mod.CategoryChart), {
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full bg-muted animate-pulse rounded-xl" />
+})
 
 interface Expense {
   id: string
@@ -60,14 +66,16 @@ export function ExpensesClient({ initialExpenses, chartData }: ExpensesClientPro
               Upload CSV
             </Link>
           </Button>
-          <Button 
+          <ButtonWithLoading 
             className="bg-purple-600 hover:bg-purple-700 text-white"
             onClick={handleCategorizeAll}
-            disabled={isProcessing || totalToProcess === 0}
+            isLoading={isProcessing}
+            loadingText={`Categorizing (${processedCount}/${totalToProcess})`}
+            disabled={totalToProcess === 0}
           >
             <Brain className="mr-2 h-4 w-4" />
             Categorize All ({totalToProcess})
-          </Button>
+          </ButtonWithLoading>
         </div>
       </div>
 

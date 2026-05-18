@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -40,7 +41,7 @@ export function PDFPreviewModal({
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500))
     setIsSending(false)
-    alert("Invoice sent to client email.")
+    toast.success("Invoice sent to client email.")
   }
 
   return (

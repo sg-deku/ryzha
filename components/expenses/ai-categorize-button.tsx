@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 interface AICategorizeButtonProps {
   expenseId: string
@@ -21,13 +22,14 @@ export function AICategorizeButton({ expenseId }: AICategorizeButtonProps) {
       })
 
       if (res.ok) {
+        toast.success("Categorized successfully")
         router.refresh()
       } else {
         const error = await res.json()
-        alert(`Failed to categorize: ${error.error}`)
+        toast.error(`Failed to categorize: ${error.error}`)
       }
     } catch (err) {
-      alert("An error occurred while categorizing")
+      toast.error("An error occurred while categorizing")
     } finally {
       setIsCategorizing(false)
     }

@@ -3,8 +3,10 @@
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useDropzone } from "react-dropzone"
+import { toast } from "sonner"
 import { Upload, FileText, CheckCircle2, AlertCircle, X, Loader2, Table as TableIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ButtonWithLoading } from "@/components/ui/button-with-loading"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -95,13 +97,14 @@ export function UploadExpensesForm() {
         body: formData 
       })
       if (res.ok) {
+        toast.success("Expenses imported successfully")
         router.push("/expenses")
       } else {
         const err = await res.json()
-        alert("Upload failed: " + err.error)
+        toast.error("Upload failed: " + err.error)
       }
     } catch (e) {
-      alert("An error occurred during upload")
+      toast.error("An error occurred during upload")
     } finally {
       setLoading(false)
     }
@@ -151,7 +154,7 @@ export function UploadExpensesForm() {
                   <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB • CSV File</p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={reset}>
+              <Button variant="ghost" size="icon" onClick={reset} aria-label="Remove file">
                 <X className="h-4 w-4" />
               </Button>
             </CardContent>
@@ -241,20 +244,15 @@ export function UploadExpensesForm() {
 
             <div className="flex justify-end gap-4 pt-4 border-t">
               <Button variant="outline" onClick={reset}>Cancel</Button>
-              <Button 
+              <ButtonWithLoading 
                 onClick={handleUpload}
-                disabled={!mapping.date || !mapping.description || !mapping.amount || loading}
+                isLoading={loading}
+                loadingText="Uploading..."
+                disabled={!mapping.date || !mapping.description || !mapping.amount}
                 className="min-w-[150px]"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  "Import Expenses"
-                )}
-              </Button>
+                Import Expenses
+              </ButtonWithLoading>
             </div>
           </div>
         )}

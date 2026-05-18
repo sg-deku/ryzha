@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { ButtonWithLoading } from "@/components/ui/button-with-loading"
 import { CompanyStep } from "./steps/company"
 import { TaxSettingsStep } from "./steps/tax-settings"
 
@@ -40,14 +42,15 @@ export function OnboardingWizard() {
         body: JSON.stringify(formData)
       })
       if (res.ok) {
+        toast.success("Welcome to Rhyza!")
         router.push("/dashboard")
         router.refresh()
       } else {
-        alert("Failed to complete onboarding")
+        toast.error("Failed to complete onboarding")
       }
     } catch (error) {
       console.error(error)
-      alert("An error occurred")
+      toast.error("An error occurred during onboarding")
     } finally {
       setLoading(false)
     }
@@ -99,13 +102,14 @@ export function OnboardingWizard() {
               Next
             </button>
           ) : (
-            <button
+            <ButtonWithLoading
               type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+              isLoading={loading}
+              loadingText="Completing..."
+              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
-              {loading ? "Completing..." : "Complete Setup"}
-            </button>
+              Complete Setup
+            </ButtonWithLoading>
           )}
         </div>
       </form>

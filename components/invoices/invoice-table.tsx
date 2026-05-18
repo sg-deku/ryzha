@@ -39,6 +39,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { EmptyState } from "@/components/ui/empty-state"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
+import { CalendarDays } from "lucide-react"
 
 interface Invoice {
   id: string
@@ -216,8 +223,20 @@ export function InvoiceTable({ initialInvoices }: InvoiceTableProps) {
           <TableBody>
             {filteredAndSortedInvoices.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  No invoices found.
+                <TableCell colSpan={7} className="p-0">
+                  <EmptyState
+                    icon={FileText}
+                    title="No invoices found"
+                    description={search || statusFilter !== "ALL" 
+                      ? "No invoices match your current filters. Try adjusting your search or filters."
+                      : "You haven't created any invoices yet. Start by creating your first invoice."
+                    }
+                    action={!search && statusFilter === "ALL" ? {
+                      label: "Create Invoice",
+                      onClick: () => router.push("/invoices/new")
+                    } : undefined}
+                    className="border-none rounded-none py-20"
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -229,7 +248,39 @@ export function InvoiceTable({ initialInvoices }: InvoiceTableProps) {
                       onCheckedChange={() => toggleSelect(invoice.id)}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                  <TableCell className="font-medium">
+                    <HoverCard openDelay={200}>
+                      <HoverCardTrigger asChild>
+                        <button 
+                          onClick={() => router.push(`/invoices/${invoice.id}`)}
+                          className="hover:underline text-blue-600 dark:text-blue-400"
+                        >
+                          {invoice.invoiceNumber}
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardContent className="w-80">
+                        <div className="flex justify-between space-x-4">
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-semibold">Invoice {invoice.invoiceNumber}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Client: {invoice.clientName}
+                            </p>
+                            <div className="flex items-center pt-2">
+                              <CalendarDays className="mr-2 h-4 w-4 opacity-70" />{" "}
+                              <span className="text-xs text-muted-foreground">
+                                Due {new Date(invoice.issueDate).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="pt-2">
+                              <span className="text-lg font-bold">
+                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.total)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </TableCell>
                   <TableCell>
                     <div className="font-medium">{invoice.clientName}</div>
                     <div className="text-xs text-muted-foreground">{invoice.clientEmail}</div>
@@ -253,7 +304,7 @@ export function InvoiceTable({ initialInvoices }: InvoiceTableProps) {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

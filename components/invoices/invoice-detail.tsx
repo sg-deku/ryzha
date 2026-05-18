@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import confetti from "canvas-confetti"
+import { toast } from "sonner"
 import { 
   ArrowLeft, 
   FileText, 
@@ -50,9 +52,46 @@ interface Invoice {
   lineItems: LineItem[]
 }
 
-export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
+export function InvoiceDetail({ invoice: initialInvoice }: { invoice: Invoice }) {
   const router = useRouter()
+  const [invoice, setInvoice] = useState(initialInvoice)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  const handleMarkAsPaid = async () => {
+    setIsUpdating(true)
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "PAID" })
+      })
+
+      if (res.ok) {
+        const updated = await res.json()
+        setInvoice(updated)
+        toast.success("Invoice marked as paid")
+        
+        // Trigger confetti if first time
+        const hasConfetti = localStorage.getItem("has_confetti_invoice_paid")
+        if (!hasConfetti) {
+          confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd']
+          })
+          localStorage.setItem("has_confetti_invoice_paid", "true")
+        }
+      } else {
+        toast.error("Failed to update invoice status")
+      }
+    } catch (err) {
+      toast.error("An error occurred")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   return (
     <div className="container py-8 max-w-5xl">
@@ -97,14 +136,15 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="More actions">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit Invoice</DropdownMenuItem>
-              <DropdownMenuItem>Mark as Sent</DropdownMenuItem>
-              <DropdownMenuItem>Mark as Paid</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`/invoices/edit/${invoice.id}`)}>Edit Invoice</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleMarkAsPaid} disabled={isUpdating || invoice.status === 'PAID'}>
+                Mark as Paid
+              </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive">Delete Invoice</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -212,10 +252,23 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
                 </div>
                 <p className="text-sm font-semibold text-blue-900 dark:text-blue-300">Quick Actions</p>
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 mb-2">
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700 mb-2"
+                onClick={() => toast.info("Email feature coming soon")}
+              >
                 <Mail className="mr-2 h-4 w-4" />
                 Send to Client
               </Button>
+              {invoice.status !== 'PAID' && (
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700 mb-2 text-white"
+                  onClick={handleMarkAsPaid}
+                  disabled={isUpdating}
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  {isUpdating ? "Updating..." : "Mark as Paid"}
+                </Button>
+              )}
               <Button variant="outline" className="w-full" onClick={() => setIsPreviewOpen(true)}>
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF

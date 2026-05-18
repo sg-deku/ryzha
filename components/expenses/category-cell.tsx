@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 const categories = [
   "Software & SaaS",
@@ -42,14 +43,15 @@ export function CategoryCell({ expenseId, initialCategory }: CategoryCellProps) 
       })
 
       if (res.ok) {
+        toast.success("Category updated")
         setCategory(newCategory)
         setIsEditing(false)
         router.refresh()
       } else {
-        alert("Failed to save category")
+        toast.error("Failed to save category")
       }
     } catch (err) {
-      alert("Error saving category")
+      toast.error("Error saving category")
     } finally {
       setIsSaving(false)
     }

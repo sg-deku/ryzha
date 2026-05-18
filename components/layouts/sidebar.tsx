@@ -34,6 +34,17 @@ export function Sidebar() {
     localStorage.setItem("sidebar-collapsed", JSON.stringify(newState))
   }
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle sidebar with [ key (common shortcut)
+      if (e.key === '[' && (e.metaKey || e.ctrlKey)) {
+        toggleCollapse()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [collapsed])
+
   if (!mounted) return null
 
   return (
@@ -92,6 +103,7 @@ export function Sidebar() {
             size="icon"
             className="w-full justify-center"
             onClick={toggleCollapse}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
               <ChevronRight className="h-5 w-5" />

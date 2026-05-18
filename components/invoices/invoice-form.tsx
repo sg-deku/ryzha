@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { InvoiceBuilder } from "./invoice-builder"
 import { Sparkles, Loader2, Plus, Save, FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ButtonWithLoading } from "@/components/ui/button-with-loading"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -151,12 +153,13 @@ export function InvoiceForm() {
       })
 
       if (res.ok) {
+        toast.success("Invoice saved as draft")
         router.push("/invoices")
       } else {
-        alert("Failed to save invoice")
+        toast.error("Failed to save invoice")
       }
     } catch (err) {
-      alert("An error occurred")
+      toast.error("An error occurred while saving")
     } finally {
       setIsSaving(false)
     }
@@ -188,16 +191,16 @@ export function InvoiceForm() {
         // Generate PDF
         const pdfRes = await fetch(`/api/invoices/${invoice.id}/generate-pdf`, { method: "POST" })
         if (pdfRes.ok) {
-          alert(`Invoice ${invoice.invoiceNumber} saved and PDF generated!`)
+          toast.success(`Invoice ${invoice.invoiceNumber} saved and PDF generated!`)
         } else {
-          alert(`Invoice saved but PDF generation failed.`)
+          toast.warning(`Invoice saved but PDF generation failed.`)
         }
         router.push("/invoices")
       } else {
-        alert("Failed to save invoice")
+        toast.error("Failed to save invoice")
       }
     } catch (err) {
-      alert("An error occurred")
+      toast.error("An error occurred during generation")
     } finally {
       setIsGenerating(false)
     }
@@ -231,9 +234,10 @@ export function InvoiceForm() {
           return [...prev, ...newItems]
         })
         setAiInput("")
+        toast.success("AI suggestions applied")
       }
     } catch (err) {
-      alert("AI suggestion failed")
+      toast.error("AI suggestion failed")
     } finally {
       setIsSuggesting(false)
     }
@@ -247,14 +251,23 @@ export function InvoiceForm() {
           <p className="text-muted-foreground">Create and send a professional invoice.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          <ButtonWithLoading 
+            variant="outline" 
+            onClick={handleSave} 
+            isLoading={isSaving}
+            loadingText="Saving..."
+          >
+            <Save className="mr-2 h-4 w-4" />
             Save Draft
-          </Button>
-          <Button onClick={handleSaveAndGenerate} disabled={isGenerating}>
-            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+          </ButtonWithLoading>
+          <ButtonWithLoading 
+            onClick={handleSaveAndGenerate} 
+            isLoading={isGenerating}
+            loadingText="Generating..."
+          >
+            <FileDown className="mr-2 h-4 w-4" />
             Generate PDF
-          </Button>
+          </ButtonWithLoading>
         </div>
       </div>
 
@@ -274,20 +287,15 @@ export function InvoiceForm() {
               className="flex-1 bg-background"
               onKeyDown={(e) => e.key === "Enter" && handleAISuggest()}
             />
-            <Button 
+            <ButtonWithLoading 
               onClick={handleAISuggest}
-              disabled={isSuggesting || !aiInput}
+              isLoading={isSuggesting}
+              loadingText="Thinking..."
+              disabled={!aiInput}
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >
-              {isSuggesting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Thinking...
-                </>
-              ) : (
-                "Suggest Items"
-              )}
-            </Button>
+              Suggest Items
+            </ButtonWithLoading>
           </div>
         </CardContent>
       </Card>

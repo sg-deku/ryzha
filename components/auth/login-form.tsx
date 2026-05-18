@@ -2,6 +2,7 @@
 import { signIn } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -11,8 +12,12 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const res = await signIn("credentials", { email, password, redirect: false })
-    if (res?.ok) router.push("/dashboard")
-    else alert("Login failed")
+    if (res?.ok) {
+      toast.success("Welcome back!")
+      router.push("/dashboard")
+    } else {
+      toast.error("Login failed. Please check your credentials.")
+    }
   }
 
   return (

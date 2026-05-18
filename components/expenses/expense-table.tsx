@@ -25,6 +25,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { CategoryCell } from "./category-cell"
 import { AICategorizeButton } from "./ai-categorize-button"
+import { EmptyState } from "@/components/ui/empty-state"
+import { CreditCard } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,7 +90,7 @@ export function ExpenseTable({ initialExpenses, selectedCategory, onSelectCatego
               className="pl-9"
             />
           </div>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" aria-label="Filter expenses">
             <Filter className="h-4 w-4" />
           </Button>
         </div>
@@ -159,7 +161,7 @@ export function ExpenseTable({ initialExpenses, selectedCategory, onSelectCatego
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -177,6 +179,23 @@ export function ExpenseTable({ initialExpenses, selectedCategory, onSelectCatego
             TableHead: TableHeader,
             TableRow: (props: any) => <TableRow {...props} className={cn("hover:bg-muted/30", props.className)} />,
             TableBody: TableBody,
+            EmptyPlaceholder: () => (
+              <div className="py-20">
+                <EmptyState
+                  icon={CreditCard}
+                  title="No expenses found"
+                  description={search || selectedCategory
+                    ? "No expenses match your current filters. Try adjusting your search or category."
+                    : "You haven't uploaded any expenses yet. Start by importing a CSV file."
+                  }
+                  action={!search && !selectedCategory ? {
+                    label: "Upload CSV",
+                    onClick: () => window.location.href = "/expenses/upload"
+                  } : undefined}
+                  className="border-none"
+                />
+              </div>
+            )
           }}
         />
       </div>
