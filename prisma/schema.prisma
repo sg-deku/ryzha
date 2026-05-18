@@ -19,6 +19,7 @@ model Organization {
   legalName           String?
   address             Json?    // { street, city, country, postalCode }
   taxId               String?
+  logoUrl             String?
   defaultTaxRate      Float    @default(0)
   currency            String   @default("USD")
   onboardingCompleted Boolean  @default(false)

@@ -6,6 +6,8 @@ import Link from "next/link"
 import { AICategorizeButton } from "@/components/expenses/ai-categorize-button"
 import { CategoryCell } from "@/components/expenses/category-cell"
 
+export const dynamic = 'force-dynamic'
+
 export default async function ExpensesPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect("/login")
