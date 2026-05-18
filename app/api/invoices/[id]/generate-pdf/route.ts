@@ -39,7 +39,7 @@ export async function POST(
         invoice, 
         organization, 
         qrCodeDataUrl 
-      })
+      }) as any
     )
 
     // Upload to S3

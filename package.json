@@ -30,6 +30,7 @@
   "devDependencies": {
     "@types/bcrypt": "latest",
     "@types/node": "latest",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "autoprefixer": "latest",
