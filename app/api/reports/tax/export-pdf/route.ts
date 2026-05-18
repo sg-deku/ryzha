@@ -1,7 +1,10 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 import { buildTaxReport } from "@/lib/tax/tax-report-builder"
-import { NextResponse } from "next/server"
+import { renderToBuffer } from "@react-pdf/renderer"
+import { TaxReportPDF } from "@/lib/pdf/tax-report-pdf"
+import React from 'react'
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
@@ -26,31 +29,27 @@ export async function GET(req: Request) {
       taxRate
     })
 
-    // Generate CSV
-    const headers = ["Date", "Reference", "Type", "Jurisdiction", "Rate %", "Amount", "Tax"]
-    const rows = report.details.map(d => [
-      new Date(d.date).toLocaleDateString(),
-      d.reference,
-      d.type,
-      d.jurisdiction,
-      d.rate,
-      d.amount.toFixed(2),
-      d.tax.toFixed(2)
-    ])
+    const organization = await prisma.organization.findUnique({
+      where: { id: session.user.organizationId }
+    })
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.join(","))
-    ].join("\n")
+    const buffer = await renderToBuffer(
+      React.createElement(TaxReportPDF, {
+        report,
+        organization,
+        startDate,
+        endDate
+      }) as any
+    )
 
-    return new Response(csvContent, {
+    return new Response(buffer, {
       headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="tax-report-${startDate}-to-${endDate}.csv"`
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="tax-report-${startDate}-to-${endDate}.pdf"`
       }
     })
   } catch (error: any) {
-    console.error("CSV export error:", error)
-    return new Response("Failed to export CSV", { status: 500 })
+    console.error("PDF export error:", error)
+    return new Response("Failed to export PDF", { status: 500 })
   }
 }
