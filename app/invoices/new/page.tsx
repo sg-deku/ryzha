@@ -20,6 +20,7 @@ export default function NewInvoicePage() {
   const [clientName, setClientName] = useState("")
   const [clientEmail, setClientEmail] = useState("")
   const [clientAddress, setClientAddress] = useState("")
+  const [defaultTaxRate, setDefaultTaxRate] = useState(0)
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: "1", description: "", quantity: 1, unitPrice: 0, taxRate: 0, amount: 0 }
   ])
@@ -27,11 +28,17 @@ export default function NewInvoicePage() {
   const [totalTax, setTotalTax] = useState(0)
   const [total, setTotal] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   useEffect(() => {
     fetch("/api/invoices")
       .then(res => res.json())
-      .then(data => setInvoiceNumber(data.nextNumber))
+      .then(data => {
+        setInvoiceNumber(data.nextNumber)
+        setDefaultTaxRate(data.defaultTaxRate)
+        // Apply default tax rate to existing items
+        setLineItems(prev => prev.map(item => ({ ...item, taxRate: data.defaultTaxRate })))
+      })
   }, [])
 
   useEffect(() => {
@@ -52,8 +59,15 @@ export default function NewInvoicePage() {
       description: "", 
       quantity: 1, 
       unitPrice: 0, 
-      taxRate: 0, 
+      taxRate: defaultTaxRate, 
       amount: 0 
+    }])
+  }
+
+  const cloneLineItem = (item: LineItem) => {
+    setLineItems([...lineItems, { 
+      ...item, 
+      id: Math.random().toString(36).substr(2, 9) 
     }])
   }
 
@@ -105,6 +119,42 @@ export default function NewInvoicePage() {
       alert("An error occurred")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleSaveAndGenerate = async () => {
+    setIsGenerating(true)
+    try {
+      // First save the invoice
+      const res = await fetch("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invoiceNumber,
+          issueDate,
+          dueDate,
+          clientName,
+          clientEmail,
+          clientAddress: { raw: clientAddress },
+          lineItems,
+          subtotal,
+          totalTax,
+          total
+        })
+      })
+
+      if (res.ok) {
+        const invoice = await res.json()
+        // Mock PDF generation call
+        alert(`Invoice ${invoice.invoiceNumber} saved! PDF generation is a mock for now.`)
+        router.push("/invoices")
+      } else {
+        alert("Failed to save invoice")
+      }
+    } catch (err) {
+      alert("An error occurred")
+    } finally {
+      setIsGenerating(false)
     }
   }
 
@@ -179,7 +229,7 @@ export default function NewInvoicePage() {
               <th className="px-4 py-2 w-32">Unit Price</th>
               <th className="px-4 py-2 w-24">Tax %</th>
               <th className="px-4 py-2 w-32 text-right">Amount</th>
-              <th className="px-4 py-2 w-16"></th>
+              <th className="px-4 py-2 w-24 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -220,8 +270,21 @@ export default function NewInvoicePage() {
                 <td className="p-2 text-right font-medium">
                   {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(item.amount)}
                 </td>
-                <td className="p-2 text-center">
-                  <button onClick={() => removeLineItem(item.id)} className="text-red-500 hover:text-red-700">✕</button>
+                <td className="p-2 flex justify-center gap-2">
+                  <button 
+                    onClick={() => cloneLineItem(item)} 
+                    className="text-gray-500 hover:text-gray-700"
+                    title="Clone Row"
+                  >
+                    📑
+                  </button>
+                  <button 
+                    onClick={() => removeLineItem(item.id)} 
+                    className="text-red-500 hover:text-red-700"
+                    title="Remove Row"
+                  >
+                    ✕
+                  </button>
                 </td>
               </tr>
             ))}
@@ -261,10 +324,17 @@ export default function NewInvoicePage() {
         </button>
         <button 
           onClick={handleSave}
-          disabled={isSaving}
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          disabled={isSaving || isGenerating}
+          className="px-6 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50 disabled:opacity-50"
         >
           {isSaving ? "Saving..." : "Save as Draft"}
+        </button>
+        <button 
+          onClick={handleSaveAndGenerate}
+          disabled={isSaving || isGenerating}
+          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isGenerating ? "Generating..." : "Save & Generate PDF"}
         </button>
       </div>
     </div>

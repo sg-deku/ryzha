@@ -8,8 +8,18 @@ export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const nextNumber = await generateInvoiceNumber(session.user.organizationId)
-  return NextResponse.json({ nextNumber })
+  const [nextNumber, org] = await Promise.all([
+    generateInvoiceNumber(session.user.organizationId),
+    prisma.organization.findUnique({
+      where: { id: session.user.organizationId },
+      select: { defaultTaxRate: true }
+    })
+  ])
+  
+  return NextResponse.json({ 
+    nextNumber, 
+    defaultTaxRate: org?.defaultTaxRate || 0 
+  })
 }
 
 export async function POST(req: Request) {
