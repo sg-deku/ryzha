@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 
+export const dynamic = 'force-dynamic'
+
 export default function TaxReportPage() {
   const [year, setYear] = useState(new Date().getFullYear())
   const [quarter, setQuarter] = useState(Math.floor(new Date().getMonth() / 3) + 1)

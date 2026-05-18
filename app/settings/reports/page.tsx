@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+export const dynamic = 'force-dynamic'
+
 export default function ReportSchedulePage() {
   const [schedule, setSchedule] = useState({
     recipients: '',

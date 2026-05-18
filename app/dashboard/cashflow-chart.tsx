@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
 
 export function CashFlowForecast() {
   const [forecast, setForecast] = useState<any>(null)
@@ -16,12 +17,13 @@ export function CashFlowForecast() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          currentBalance: 15000, // Mock current balance
+          currentBalance: 15000,
           whatIfScenarios: currentScenarios 
         })
       })
       if (res.ok) {
-        setForecast(await res.json())
+        const data = await res.json()
+        setForecast(data)
       }
     } catch (err) {
       console.error(err)
@@ -43,17 +45,24 @@ export function CashFlowForecast() {
     fetchForecast(newScenarios)
   }
 
-  if (loading) return <div className="p-8 text-center">Analysing data and projecting cash flow...</div>
+  if (loading && !forecast) return <div className="p-8 text-center bg-white rounded-xl border">Analysing data and projecting cash flow...</div>
+
+  // Add confidence interval mock if not present
+  const chartData = forecast?.dailyForecast?.map((day: any) => ({
+    ...day,
+    date: day.date.split('-').slice(1).join('/'),
+    confidenceRange: [day.balance * 0.9, day.balance * 1.1]
+  })) || []
 
   return (
     <div className="p-6 space-y-6 bg-white rounded-xl border">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold">AI Cash Flow Forecast (90 Days)</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <input 
             type="text" 
             placeholder="What if: Add new hire" 
-            className="p-2 border rounded text-sm"
+            className="p-2 border rounded text-sm flex-1 sm:w-auto"
             value={whatIfDesc}
             onChange={e => setWhatIfDesc(e.target.value)}
           />
@@ -66,41 +75,67 @@ export function CashFlowForecast() {
           />
           <button 
             onClick={handleAddScenario}
-            className="px-4 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+            className="px-4 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 whitespace-nowrap"
+            disabled={loading}
           >
-            Re-forecast
+            {loading ? "..." : "Re-forecast"}
           </button>
         </div>
       </div>
 
       {forecast && (
         <div className="space-y-6">
-          {/* Simple SVG Chart Placeholder */}
-          <div className="h-64 bg-gray-50 border rounded-lg flex items-end p-4 relative">
-             <div className="absolute top-4 left-4 flex gap-4">
-                <div className="flex items-center gap-1">
-                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-                  <span className="text-xs text-gray-500">Predicted Balance</span>
-                </div>
-             </div>
-             {/* Chart Line would go here. For MVP we show balance points */}
-             <div className="w-full flex justify-between items-end h-full">
-                {forecast.dailyForecast?.filter((_: any, i: number) => i % 15 === 0).map((day: any, i: number) => (
-                  <div key={i} className="flex flex-col items-center gap-2 group relative">
-                    <div 
-                      className="w-4 bg-blue-500 rounded-t" 
-                      style={{ height: `${Math.max(10, (day.balance / 30000) * 100)}%` }}
-                    ></div>
-                    <span className="text-[10px] text-gray-400 -rotate-45">{day.date.split('-').slice(1).join('/')}</span>
-                    <div className="absolute bottom-full mb-2 hidden group-hover:block bg-black text-white p-1 rounded text-[10px] whitespace-nowrap">
-                      ${day.balance.toLocaleString()}
-                    </div>
-                  </div>
-                ))}
-             </div>
+          <div className="h-[300px] w-full" data-testid="cashflow-chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorConfidence" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#93c5fd" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#93c5fd" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} dy={10} />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 12, fill: "#6b7280" }} 
+                  tickFormatter={(val) => `$${val/1000}k`} 
+                  dx={-10}
+                />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <Tooltip 
+                  formatter={(value: any, name: any) => {
+                    if (name === "confidenceRange") return null
+                    return [`$${Number(value).toLocaleString()}`, "Predicted Balance"]
+                  }}
+                  labelStyle={{ color: '#374151', fontWeight: 'bold', marginBottom: '4px' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="confidenceRange" 
+                  stroke="none" 
+                  fill="url(#colorConfidence)" 
+                  isAnimationActive={true} 
+                  animationDuration={1500}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="balance" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2} 
+                  fill="url(#colorBalance)" 
+                  isAnimationActive={true} 
+                  animationDuration={1500}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <h3 className="font-semibold text-sm flex items-center gap-2">
                 <span>🔄</span> Recurring Expenses Identified

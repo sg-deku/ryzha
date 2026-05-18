@@ -34,7 +34,6 @@ describe('Dashboard Responsive Grid', () => {
     const gridContainer = screen.getByTestId('cashflow-forecast').parentElement?.parentElement
     expect(gridContainer).toHaveClass('grid')
     expect(gridContainer).toHaveClass('grid-cols-1')
-    expect(gridContainer).toHaveClass('md:grid-cols-2')
     expect(gridContainer).toHaveClass('lg:grid-cols-3')
   })
 })

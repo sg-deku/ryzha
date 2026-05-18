@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 
+export const dynamic = 'force-dynamic'
+
 export default function IntegrationsPage() {
   const [webhooks, setWebhooks] = useState<any[]>([])
   const [logs, setLogs] = useState<any[]>([])

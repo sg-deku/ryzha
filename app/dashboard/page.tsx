@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma"
 import { CashFlowForecast } from "./cashflow-chart"
 import { DashboardAlerts } from "./dashboard-alerts"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { KPIGrid } from "@/components/dashboard/kpi-grid"
+import { ActivityFeed } from "@/components/dashboard/activity-feed"
+import { AnomalyCarousel } from "@/components/dashboard/anomaly-carousel"
 
 export const dynamic = 'force-dynamic'
 
@@ -35,12 +38,17 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <AnomalyCarousel />
+
+      <KPIGrid />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
           <CashFlowForecast />
         </div>
-        <div>
+        <div className="space-y-6">
           <DashboardAlerts />
+          <ActivityFeed />
         </div>
       </div>
     </div>
