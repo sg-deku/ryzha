@@ -19,6 +19,8 @@ export function InvoiceForm() {
   const [dueDate, setDueDate] = useState("")
   const [clientName, setClientName] = useState("")
   const [clientEmail, setClientEmail] = useState("")
+  const [clientCountry, setClientCountry] = useState("")
+  const [productCategory, setProductCategory] = useState("Software & SaaS")
   const [clientAddress, setClientAddress] = useState("")
   const [defaultTaxRate, setDefaultTaxRate] = useState(0)
   const [lineItems, setLineItems] = useState<LineItem[]>([
@@ -54,6 +56,26 @@ export function InvoiceForm() {
     setTotalTax(tax)
     setTotal(sub + tax)
   }, [lineItems])
+
+  useEffect(() => {
+    if (clientCountry && productCategory && subtotal > 0) {
+      fetch("/api/tax/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: subtotal,
+          productCategory,
+          customerCountry: clientCountry
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.taxRate !== undefined) {
+          setLineItems(prev => prev.map(item => ({ ...item, taxRate: data.taxRate * 100 })))
+        }
+      })
+    }
+  }, [clientCountry, productCategory, subtotal])
 
   const addLineItem = () => {
     setLineItems([...lineItems, { 
@@ -277,6 +299,32 @@ export function InvoiceForm() {
               className="w-full p-2 border rounded"
               placeholder="billing@client.com"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Client Country (ISO)</label>
+              <input 
+                type="text" 
+                value={clientCountry} 
+                onChange={e => setClientCountry(e.target.value)} 
+                className="w-full p-2 border rounded"
+                placeholder="e.g. DE, US, GB"
+                maxLength={2}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Category</label>
+              <select 
+                value={productCategory} 
+                onChange={e => setProductCategory(e.target.value)}
+                className="w-full p-2 border rounded"
+              >
+                <option value="Software & SaaS">Software & SaaS</option>
+                <option value="Hardware">Hardware</option>
+                <option value="Consulting">Consulting</option>
+                <option value="Training">Training</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
