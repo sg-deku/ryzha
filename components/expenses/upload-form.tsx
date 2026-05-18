@@ -1,10 +1,36 @@
 "use client"
-import { useState, useEffect } from "react"
+
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useDropzone } from "react-dropzone"
+import { toast } from "sonner"
+import { Upload, FileText, CheckCircle2, AlertCircle, X, Loader2, Table as TableIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ButtonWithLoading } from "@/components/ui/button-with-loading"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 
 export function UploadExpensesForm() {
   const [file, setFile] = useState<File | null>(null)
   const [headers, setHeaders] = useState<string[]>([])
+  const [previewRows, setPreviewRows] = useState<string[][]>([])
   const [mapping, setMapping] = useState<Record<string, string>>({
     date: "",
     description: "",
@@ -13,28 +39,44 @@ export function UploadExpensesForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    if (file) {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const droppedFile = acceptedFiles[0]
+    if (droppedFile) {
+      setFile(droppedFile)
       const reader = new FileReader()
       reader.onload = (e) => {
         const text = e.target?.result as string
-        const firstLine = text.split("\n")[0]
-        const cols = firstLine.split(",").map(c => c.trim())
-        setHeaders(cols)
-        
-        // Auto-mapping attempt
-        const newMapping: Record<string, string> = { ...mapping }
-        cols.forEach(col => {
-          const c = col.toLowerCase()
-          if (c.includes("date")) newMapping.date = col
-          if (c.includes("desc")) newMapping.description = col
-          if (c.includes("amount") || c.includes("value")) newMapping.amount = col
-        })
-        setMapping(newMapping)
+        const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0)
+        if (lines.length > 0) {
+          const cols = lines[0].split(",").map(c => c.trim().replace(/^"|"$/g, ''))
+          setHeaders(cols)
+          
+          // Preview first 5 rows
+          const rows = lines.slice(1, 6).map(line => 
+            line.split(",").map(c => c.trim().replace(/^"|"$/g, ''))
+          )
+          setPreviewRows(rows)
+
+          // Auto-mapping
+          const newMapping: Record<string, string> = { date: "", description: "", amount: "" }
+          cols.forEach(col => {
+            const c = col.toLowerCase()
+            if (c.includes("date")) newMapping.date = col
+            if (c.includes("desc")) newMapping.description = col
+            if (c.includes("amount") || c.includes("value") || c.includes("total")) newMapping.amount = col
+          })
+          setMapping(newMapping)
+        }
       }
-      reader.readAsText(file)
+      reader.readAsText(droppedFile)
     }
-  }, [file])
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'text/csv': ['.csv'] },
+    multiple: false
+  })
 
   const handleUpload = async () => {
     if (!file) return
@@ -55,85 +97,165 @@ export function UploadExpensesForm() {
         body: formData 
       })
       if (res.ok) {
+        toast.success("Expenses imported successfully")
         router.push("/expenses")
       } else {
         const err = await res.json()
-        alert("Upload failed: " + err.error)
+        toast.error("Upload failed: " + err.error)
       }
     } catch (e) {
-      alert("An error occurred during upload")
+      toast.error("An error occurred during upload")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleMappingChange = (field: string, header: string) => {
-    setMapping(prev => ({ ...prev, [field]: header }))
+  const reset = () => {
+    setFile(null)
+    setHeaders([])
+    setPreviewRows([])
+    setMapping({ date: "", description: "", amount: "" })
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Upload Expenses CSV</h1>
-      
-      <div className="space-y-6 bg-white p-6 border rounded shadow-sm">
-        <div>
-          <label className="block text-sm font-medium mb-1">Select CSV File</label>
-          <input 
-            type="file" 
-            accept=".csv" 
-            onChange={(e) => setFile(e.target.files?.[0] || null)} 
-            className="w-full p-2 border rounded"
-          />
-        </div>
+    <div className="container py-12 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Upload Expenses</h1>
+        <p className="text-muted-foreground">Import your bank statements or expense reports via CSV.</p>
+      </div>
+
+      <div className="space-y-8">
+        {!file ? (
+          <div
+            {...getRootProps()}
+            className={cn(
+              "border-2 border-dashed rounded-xl p-12 flex flex-col items-center justify-center transition-colors cursor-pointer",
+              isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
+            )}
+          >
+            <input {...getInputProps()} />
+            <div className="p-4 bg-primary/10 rounded-full mb-4">
+              <Upload className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-1">Click or drag CSV here</h3>
+            <p className="text-sm text-muted-foreground text-center max-w-xs">
+              Upload your expense file. We'll help you map the columns to our format.
+            </p>
+          </div>
+        ) : (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="font-semibold">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB • CSV File</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={reset} aria-label="Remove file">
+                <X className="h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {headers.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="font-semibold">Map Columns</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Date Column</label>
-                <select 
-                  value={mapping.date} 
-                  onChange={(e) => handleMappingChange("date", e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="">Select...</option>
-                  {headers.map(h => <option key={h} value={h}>{h}</option>)}
-                </select>
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <h2 className="text-xl font-semibold">Map your columns</h2>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Description Column</label>
-                <select 
-                  value={mapping.description} 
-                  onChange={(e) => handleMappingChange("description", e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="">Select...</option>
-                  {headers.map(h => <option key={h} value={h}>{h}</option>)}
-                </select>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label>Date Column</Label>
+                  <Select 
+                    value={mapping.date} 
+                    onValueChange={(v) => setMapping(p => ({ ...p, date: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select column" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Description Column</Label>
+                  <Select 
+                    value={mapping.description} 
+                    onValueChange={(v) => setMapping(p => ({ ...p, description: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select column" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Amount Column</Label>
+                  <Select 
+                    value={mapping.amount} 
+                    onValueChange={(v) => setMapping(p => ({ ...p, amount: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select column" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Amount Column</label>
-                <select 
-                  value={mapping.amount} 
-                  onChange={(e) => handleMappingChange("amount", e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="">Select...</option>
-                  {headers.map(h => <option key={h} value={h}>{h}</option>)}
-                </select>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TableIcon className="h-5 w-5 text-blue-500" />
+                <h2 className="text-xl font-semibold">Data Preview</h2>
               </div>
+              <div className="rounded-md border bg-card overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      {headers.map((h, i) => (
+                        <TableHead key={i} className="whitespace-nowrap">{h}</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {previewRows.map((row, i) => (
+                      <TableRow key={i}>
+                        {row.map((cell, j) => (
+                          <TableCell key={j} className="whitespace-nowrap text-xs text-muted-foreground">{cell}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-4 pt-4 border-t">
+              <Button variant="outline" onClick={reset}>Cancel</Button>
+              <ButtonWithLoading 
+                onClick={handleUpload}
+                isLoading={loading}
+                loadingText="Uploading..."
+                disabled={!mapping.date || !mapping.description || !mapping.amount}
+                className="min-w-[150px]"
+              >
+                Import Expenses
+              </ButtonWithLoading>
             </div>
           </div>
         )}
-
-        <button 
-          onClick={handleUpload}
-          disabled={!file || !mapping.date || !mapping.description || !mapping.amount || loading}
-          className="w-full bg-blue-600 text-white p-2 rounded disabled:bg-gray-400"
-        >
-          {loading ? "Uploading..." : "Upload Expenses"}
-        </button>
       </div>
     </div>
   )

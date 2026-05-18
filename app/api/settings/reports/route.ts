@@ -9,22 +9,30 @@ export async function POST(req: Request) {
 
   const { recipients, frequency, reportType } = await req.json()
 
-  const schedule = await prisma.reportSchedule.upsert({
-    where: { 
-      organizationId: session.user.organizationId 
-    },
-    update: {
-      recipients,
-      frequency,
-      reportType
-    },
-    create: {
-      organizationId: session.user.organizationId,
-      recipients,
-      frequency,
-      reportType
-    }
+  const existing = await prisma.reportSchedule.findFirst({
+    where: { organizationId: session.user.organizationId }
   })
+
+  let schedule;
+  if (existing) {
+    schedule = await prisma.reportSchedule.update({
+      where: { id: existing.id },
+      data: {
+        recipients,
+        frequency,
+        type: reportType
+      }
+    })
+  } else {
+    schedule = await prisma.reportSchedule.create({
+      data: {
+        organizationId: session.user.organizationId,
+        recipients,
+        frequency,
+        type: reportType
+      }
+    })
+  }
 
   return NextResponse.json(schedule)
 }

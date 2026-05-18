@@ -1,6 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
+
+export const dynamic = 'force-dynamic'
 
 export default function ReportSchedulePage() {
   const [schedule, setSchedule] = useState({
@@ -17,7 +20,7 @@ export default function ReportSchedulePage() {
         recipients: schedule.recipients.split(',').map(e => e.trim())
       })
     })
-    alert('Settings saved')
+    toast.success('Settings saved')
   }
 
   return (
