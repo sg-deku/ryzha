@@ -29,6 +29,7 @@ model Organization {
   expenses Expense[]
   invoices Invoice[]
   anomalies ExpenseAnomaly[]
+  webhooks  Webhook[]
 }
 
 model Invoice {
@@ -148,6 +149,34 @@ enum TaxType {
   VAT
   SALES_TAX
   GST
+}
+
+model Webhook {
+  id             String      @id @default(cuid())
+  url            String
+  events         String[]    // ["invoice.paid", "expense.created"]
+  secret         String
+  lastSent       DateTime?
+  failures       Int         @default(0)
+  organizationId String
+  createdAt      DateTime    @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  logs           WebhookLog[]
+}
+
+model WebhookLog {
+  id           String   @id @default(cuid())
+  webhookId    String
+  event        String
+  payload      Json
+  statusCode   Int?
+  responseBody String?
+  success      Boolean
+  retryCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  webhook      Webhook  @relation(fields: [webhookId], references: [id])
 }
 
 enum Plan {
