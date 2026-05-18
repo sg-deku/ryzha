@@ -14,12 +14,16 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1048.0",
+    "@aws-sdk/s3-request-presigner": "^3.1048.0",
     "@prisma/client": "^5.14.0",
+    "@react-pdf/renderer": "^4.5.1",
     "bcrypt": "^6.0.0",
     "ioredis": "^5.10.1",
     "next": "14.2.3",
     "next-auth": "^4.24.14",
     "openai": "^6.38.0",
+    "qrcode": "^1.5.4",
     "react": "latest",
     "react-dom": "latest"
   },

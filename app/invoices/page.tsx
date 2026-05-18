@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 
+export const dynamic = 'force-dynamic'
+
 export default async function InvoicesPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect("/login")
@@ -34,12 +36,13 @@ export default async function InvoicesPage() {
               <th className="px-6 py-3 text-sm font-semibold text-gray-600">Date</th>
               <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-right">Total</th>
               <th className="px-6 py-3 text-sm font-semibold text-gray-600">Status</th>
+              <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {invoices.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                   No invoices found. Create your first invoice to get started.
                 </td>
               </tr>
@@ -68,6 +71,18 @@ export default async function InvoicesPage() {
                     }`}>
                       {invoice.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-right">
+                    {invoice.pdfUrl && (
+                      <a 
+                        href={invoice.pdfUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline font-medium"
+                      >
+                        PDF
+                      </a>
+                    )}
                   </td>
                 </tr>
               ))

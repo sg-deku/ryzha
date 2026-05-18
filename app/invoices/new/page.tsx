@@ -29,6 +29,8 @@ export default function NewInvoicePage() {
   const [total, setTotal] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isSuggesting, setIsSuggesting] = useState(false)
+  const [aiInput, setAiInput] = useState("")
 
   useEffect(() => {
     fetch("/api/invoices")
@@ -145,8 +147,13 @@ export default function NewInvoicePage() {
 
       if (res.ok) {
         const invoice = await res.json()
-        // Mock PDF generation call
-        alert(`Invoice ${invoice.invoiceNumber} saved! PDF generation is a mock for now.`)
+        // Generate PDF
+        const pdfRes = await fetch(`/api/invoices/${invoice.id}/generate-pdf`, { method: "POST" })
+        if (pdfRes.ok) {
+          alert(`Invoice ${invoice.invoiceNumber} saved and PDF generated!`)
+        } else {
+          alert(`Invoice saved but PDF generation failed.`)
+        }
         router.push("/invoices")
       } else {
         alert("Failed to save invoice")
@@ -158,9 +165,64 @@ export default function NewInvoicePage() {
     }
   }
 
+  const handleAISuggest = async () => {
+    if (!aiInput) return
+    setIsSuggesting(true)
+    try {
+      const res = await fetch("/api/invoices/ai-suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userInput: aiInput, clientEmail })
+      })
+      if (res.ok) {
+        const suggestions = await res.json()
+        const newItems = suggestions.map((s: any) => ({
+          id: Math.random().toString(36).substr(2, 9),
+          description: s.description,
+          quantity: s.suggestedQuantity,
+          unitPrice: s.suggestedUnitPrice,
+          taxRate: s.recommendedTaxRate,
+          amount: s.suggestedQuantity * s.suggestedUnitPrice
+        }))
+        setLineItems(prev => {
+          // If first item is empty, replace it
+          if (prev.length === 1 && !prev[0].description && prev[0].amount === 0) {
+            return newItems
+          }
+          return [...prev, ...newItems]
+        })
+        setAiInput("")
+      }
+    } catch (err) {
+      alert("AI suggestion failed")
+    } finally {
+      setIsSuggesting(false)
+    }
+  }
+
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">New Invoice</h1>
+
+      <div className="mb-8 p-4 bg-purple-50 border border-purple-100 rounded-lg">
+        <h2 className="text-sm font-semibold text-purple-800 mb-2">AI Invoice Fill</h2>
+        <div className="flex gap-2">
+          <input 
+            type="text" 
+            value={aiInput} 
+            onChange={e => setAiInput(e.target.value)} 
+            placeholder="e.g. Website maintenance March" 
+            className="flex-1 p-2 border rounded text-sm"
+          />
+          <button 
+            onClick={handleAISuggest}
+            disabled={isSuggesting || !aiInput}
+            className="px-4 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 disabled:opacity-50"
+          >
+            {isSuggesting ? "Generating..." : "Suggest Line Items"}
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-8 mb-8">
         <div className="space-y-4">
