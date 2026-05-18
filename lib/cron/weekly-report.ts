@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { buildTaxReport } from '@/lib/tax/tax-report-builder'
-import { getCashFlowForecast } from '@/lib/ai/cashflow-forecast'
+import { generateCashFlowForecast } from '@/lib/ai/cashflow-forecast'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { FinancialDigestPDF } from '@/lib/pdf/financial-digest-pdf'
 import React from 'react'
@@ -38,8 +38,15 @@ async function gatherReportData(orgId: string) {
   const now = new Date()
   const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   
-  const tax = await buildTaxReport(orgId, lastWeek, now)
-  const forecast = await getCashFlowForecast(orgId)
+  const tax = await buildTaxReport({
+    orgId,
+    startDate: lastWeek,
+    endDate: now
+  })
+  const forecast = await generateCashFlowForecast({ 
+    organizationId: orgId, 
+    currentBalance: 50000 
+  })
   
   const pendingInvoices = await prisma.invoice.findMany({
     where: { organizationId: orgId, status: 'DRAFT' }, // Simplified for MVP
@@ -50,7 +57,7 @@ async function gatherReportData(orgId: string) {
     currentBalance: 50000, // Mock or fetch from integrations
     unpaidAmount: pendingInvoices.reduce((sum, i) => sum + i.total, 0),
     netTax: tax.netOwed,
-    forecastInsight: forecast.insight,
+    forecastInsight: forecast.insights?.[0] || "No major insights this week.",
     pendingInvoices
   }
 }

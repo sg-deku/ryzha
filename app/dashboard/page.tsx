@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { CashFlowForecast } from "./cashflow-chart"
 import { DashboardAlerts } from "./dashboard-alerts"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export const dynamic = 'force-dynamic'
 
@@ -23,17 +24,25 @@ export default async function DashboardPage() {
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-gray-500">Welcome back, {session.user?.name}</p>
+          <p className="text-muted-foreground">Welcome back, {session.user?.name}</p>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-gray-400">Current Cash Position</p>
-          <p className="text-2xl font-bold text-green-600">$15,000.00</p>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Current Cash Position</p>
+            <p className="text-2xl font-bold text-green-600">$15,000.00</p>
+          </div>
         </div>
       </div>
 
-      <DashboardAlerts />
-      
-      <CashFlowForecast />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <CashFlowForecast />
+        </div>
+        <div>
+          <DashboardAlerts />
+        </div>
+      </div>
     </div>
   )
 }
