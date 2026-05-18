@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { InvoiceBuilder } from "./invoice-builder"
+import { Sparkles, Loader2, Plus, Save, FileDown } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface LineItem {
   id: string
@@ -10,6 +17,7 @@ interface LineItem {
   unitPrice: number
   taxRate: number
   amount: number
+  isNew?: boolean
 }
 
 export function InvoiceForm() {
@@ -33,6 +41,14 @@ export function InvoiceForm() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
   const [aiInput, setAiInput] = useState("")
+
+  useEffect(() => {
+    // Remove highlight from new items after a delay
+    const timer = setTimeout(() => {
+      setLineItems(prev => prev.map(item => ({ ...item, isNew: false })))
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [lineItems])
 
   useEffect(() => {
     fetch("/api/invoices")
@@ -204,7 +220,8 @@ export function InvoiceForm() {
           quantity: s.suggestedQuantity,
           unitPrice: s.suggestedUnitPrice,
           taxRate: s.recommendedTaxRate,
-          amount: s.suggestedQuantity * s.suggestedUnitPrice
+          amount: s.suggestedQuantity * s.suggestedUnitPrice,
+          isNew: true
         }))
         setLineItems(prev => {
           // If first item is empty, replace it
@@ -223,229 +240,176 @@ export function InvoiceForm() {
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">New Invoice</h1>
-
-      <div className="mb-8 p-4 bg-purple-50 border border-purple-100 rounded-lg">
-        <h2 className="text-sm font-semibold text-purple-800 mb-2">AI Invoice Fill</h2>
-        <div className="flex gap-2">
-          <input 
-            type="text" 
-            value={aiInput} 
-            onChange={e => setAiInput(e.target.value)} 
-            placeholder="e.g. Website maintenance March" 
-            className="flex-1 p-2 border rounded text-sm"
-          />
-          <button 
-            onClick={handleAISuggest}
-            disabled={isSuggesting || !aiInput}
-            className="px-4 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 disabled:opacity-50"
-          >
-            {isSuggesting ? "Generating..." : "Suggest Line Items"}
-          </button>
+    <div className="container py-8 max-w-5xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">New Invoice</h1>
+          <p className="text-muted-foreground">Create and send a professional invoice.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save Draft
+          </Button>
+          <Button onClick={handleSaveAndGenerate} disabled={isGenerating}>
+            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+            Generate PDF
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-8 mb-8">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Invoice Number</label>
-            <input 
-              type="text" 
-              value={invoiceNumber} 
-              onChange={e => setInvoiceNumber(e.target.value)} 
-              className="w-full p-2 border rounded"
-            />
+      <Card className="mb-8 border-purple-100 bg-purple-50/50 dark:bg-purple-900/10 dark:border-purple-900/20">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </div>
+            <h2 className="text-sm font-semibold text-purple-900 dark:text-purple-300">AI Invoice Assistant</h2>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Issue Date</label>
-              <input 
-                type="date" 
-                value={issueDate} 
-                onChange={e => setIssueDate(e.target.value)} 
-                className="w-full p-2 border rounded"
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input 
+              value={aiInput} 
+              onChange={e => setAiInput(e.target.value)} 
+              placeholder="e.g. 10 hours of consulting at $150/hr for March project" 
+              className="flex-1 bg-background"
+              onKeyDown={(e) => e.key === "Enter" && handleAISuggest()}
+            />
+            <Button 
+              onClick={handleAISuggest}
+              disabled={isSuggesting || !aiInput}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {isSuggesting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Thinking...
+                </>
+              ) : (
+                "Suggest Items"
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="invoiceNumber">Invoice Number</Label>
+              <Input 
+                id="invoiceNumber"
+                value={invoiceNumber} 
+                onChange={e => setInvoiceNumber(e.target.value)} 
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Due Date</label>
-              <input 
-                type="date" 
-                value={dueDate} 
-                onChange={e => setDueDate(e.target.value)} 
-                className="w-full p-2 border rounded"
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="issueDate">Issue Date</Label>
+                <Input 
+                  id="issueDate"
+                  type="date" 
+                  value={issueDate} 
+                  onChange={e => setIssueDate(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input 
+                  id="dueDate"
+                  type="date" 
+                  value={dueDate} 
+                  onChange={e => setDueDate(e.target.value)} 
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientName">Client Name</Label>
+              <Input 
+                id="clientName"
+                value={clientName} 
+                onChange={e => setClientName(e.target.value)} 
+                placeholder="Acme Corp"
               />
             </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Client Name</label>
-            <input 
-              type="text" 
-              value={clientName} 
-              onChange={e => setClientName(e.target.value)} 
-              className="w-full p-2 border rounded"
-              placeholder="Company Name"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Client Email</label>
-            <input 
-              type="email" 
-              value={clientEmail} 
-              onChange={e => setClientEmail(e.target.value)} 
-              className="w-full p-2 border rounded"
-              placeholder="billing@client.com"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Client Country (ISO)</label>
-              <input 
-                type="text" 
-                value={clientCountry} 
-                onChange={e => setClientCountry(e.target.value)} 
-                className="w-full p-2 border rounded"
-                placeholder="e.g. DE, US, GB"
-                maxLength={2}
+            <div className="space-y-2">
+              <Label htmlFor="clientEmail">Client Email</Label>
+              <Input 
+                id="clientEmail"
+                type="email" 
+                value={clientEmail} 
+                onChange={e => setClientEmail(e.target.value)} 
+                placeholder="billing@acme.com"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Category</label>
-              <select 
-                value={productCategory} 
-                onChange={e => setProductCategory(e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                <option value="Software & SaaS">Software & SaaS</option>
-                <option value="Hardware">Hardware</option>
-                <option value="Consulting">Consulting</option>
-                <option value="Training">Training</option>
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="clientCountry">Client Country</Label>
+                <Input 
+                  id="clientCountry"
+                  value={clientCountry} 
+                  onChange={e => setClientCountry(e.target.value.toUpperCase())} 
+                  placeholder="US"
+                  maxLength={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={productCategory} onValueChange={setProductCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Software & SaaS">Software & SaaS</SelectItem>
+                    <SelectItem value="Hardware">Hardware</SelectItem>
+                    <SelectItem value="Consulting">Consulting</SelectItem>
+                    <SelectItem value="Training">Training</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Line Items</h2>
+          <Button variant="outline" size="sm" onClick={addLineItem}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Item
+          </Button>
+        </div>
+
+        <InvoiceBuilder
+          lineItems={lineItems}
+          setLineItems={setLineItems}
+          onUpdateItem={updateLineItem}
+          onRemoveItem={removeLineItem}
+          onCloneItem={cloneLineItem}
+        />
+
+        <div className="flex justify-end pt-4">
+          <div className="w-full max-w-[256px] space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Tax</span>
+              <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalTax)}</span>
+            </div>
+            <div className="flex justify-between border-t pt-2 font-bold text-lg">
+              <span>Total</span>
+              <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(total)}</span>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Line Items</h2>
-        <table className="w-full text-left mb-4">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="px-4 py-2">Description</th>
-              <th className="px-4 py-2 w-24">Qty</th>
-              <th className="px-4 py-2 w-32">Unit Price</th>
-              <th className="px-4 py-2 w-24">Tax %</th>
-              <th className="px-4 py-2 w-32 text-right">Amount</th>
-              <th className="px-4 py-2 w-24 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {lineItems.map(item => (
-              <tr key={item.id}>
-                <td className="p-2">
-                  <input 
-                    type="text" 
-                    value={item.description} 
-                    onChange={e => updateLineItem(item.id, "description", e.target.value)}
-                    className="w-full p-1 border rounded"
-                  />
-                </td>
-                <td className="p-2">
-                  <input 
-                    type="number" 
-                    value={item.quantity} 
-                    onChange={e => updateLineItem(item.id, "quantity", parseFloat(e.target.value) || 0)}
-                    className="w-full p-1 border rounded"
-                  />
-                </td>
-                <td className="p-2">
-                  <input 
-                    type="number" 
-                    value={item.unitPrice} 
-                    onChange={e => updateLineItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
-                    className="w-full p-1 border rounded"
-                  />
-                </td>
-                <td className="p-2">
-                  <input 
-                    type="number" 
-                    value={item.taxRate} 
-                    onChange={e => updateLineItem(item.id, "taxRate", parseFloat(e.target.value) || 0)}
-                    className="w-full p-1 border rounded"
-                  />
-                </td>
-                <td className="p-2 text-right font-medium">
-                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(item.amount)}
-                </td>
-                <td className="p-2 flex justify-center gap-2">
-                  <button 
-                    onClick={() => cloneLineItem(item)} 
-                    className="text-gray-500 hover:text-gray-700"
-                    title="Clone Row"
-                  >
-                    📑
-                  </button>
-                  <button 
-                    onClick={() => removeLineItem(item.id)} 
-                    className="text-red-500 hover:text-red-700"
-                    title="Remove Row"
-                  >
-                    ✕
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <button 
-          onClick={addLineItem}
-          className="text-blue-600 font-medium hover:underline"
-        >
-          + Add Line Item
-        </button>
-      </div>
-
-      <div className="flex justify-end mb-8">
-        <div className="w-64 space-y-2">
-          <div className="flex justify-between text-gray-600">
-            <span>Subtotal</span>
-            <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-gray-600">
-            <span>Tax</span>
-            <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalTax)}</span>
-          </div>
-          <div className="flex justify-between text-xl font-bold border-t pt-2">
-            <span>Total</span>
-            <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(total)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-4">
-        <button 
-          onClick={() => router.back()} 
-          className="px-6 py-2 border rounded hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-        <button 
-          onClick={handleSave}
-          disabled={isSaving || isGenerating}
-          className="px-6 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50 disabled:opacity-50"
-        >
-          {isSaving ? "Saving..." : "Save as Draft"}
-        </button>
-        <button 
-          onClick={handleSaveAndGenerate}
-          disabled={isSaving || isGenerating}
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          {isGenerating ? "Generating..." : "Save & Generate PDF"}
-        </button>
       </div>
     </div>
   )
