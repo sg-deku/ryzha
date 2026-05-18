@@ -54,6 +54,7 @@
     "qrcode": "^1.5.4",
     "react": "latest",
     "react-dom": "latest",
+    "react-dropzone": "^15.0.0",
     "react-virtuoso": "^4.18.7",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.6.0",

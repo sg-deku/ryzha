@@ -44,18 +44,22 @@ interface Expense {
 
 interface ExpenseTableProps {
   initialExpenses: Expense[]
+  selectedCategory?: string | null
+  onSelectCategory?: (category: string | null) => void
 }
 
-export function ExpenseTable({ initialExpenses }: ExpenseTableProps) {
+export function ExpenseTable({ initialExpenses, selectedCategory, onSelectCategory }: ExpenseTableProps) {
   const [search, setSearch] = useState("")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   
   const filteredExpenses = useMemo(() => {
-    return initialExpenses.filter(e => 
-      e.description.toLowerCase().includes(search.toLowerCase()) ||
-      (e.category?.toLowerCase() || "").includes(search.toLowerCase())
-    )
-  }, [initialExpenses, search])
+    return initialExpenses.filter(e => {
+      const matchesSearch = e.description.toLowerCase().includes(search.toLowerCase()) ||
+                           (e.category?.toLowerCase() || "").includes(search.toLowerCase())
+      const matchesCategory = !selectedCategory || e.category === selectedCategory
+      return matchesSearch && matchesCategory
+    })
+  }, [initialExpenses, search, selectedCategory])
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredExpenses.length) {
@@ -171,7 +175,7 @@ export function ExpenseTable({ initialExpenses }: ExpenseTableProps) {
           components={{
             Table: (props) => <Table {...props} className="border-collapse" />,
             TableHead: TableHeader,
-            TableRow: (props) => <TableRow {...props} className={cn("hover:bg-muted/30", props.className)} />,
+            TableRow: (props: any) => <TableRow {...props} className={cn("hover:bg-muted/30", props.className)} />,
             TableBody: TableBody,
           }}
         />

@@ -26,6 +26,7 @@ interface ExpensesClientProps {
 export function ExpensesClient({ initialExpenses, chartData }: ExpensesClientProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [processedCount, setProcessedCount] = useState(0)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const totalToProcess = initialExpenses.filter(e => e.status === 'PENDING').length
 
   const handleCategorizeAll = async () => {
@@ -101,11 +102,19 @@ export function ExpensesClient({ initialExpenses, chartData }: ExpensesClientPro
           </Card>
         </div>
         <div>
-          <CategoryChart data={chartData} />
+          <CategoryChart 
+            data={chartData} 
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
         </div>
       </div>
 
-      <ExpenseTable initialExpenses={initialExpenses} />
+      <ExpenseTable 
+        initialExpenses={initialExpenses} 
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
     </div>
   )
 }
