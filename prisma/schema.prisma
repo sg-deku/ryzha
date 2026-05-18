@@ -30,6 +30,7 @@ model Organization {
   invoices Invoice[]
   anomalies ExpenseAnomaly[]
   webhooks  Webhook[]
+  reportSchedules ReportSchedule[]
 }
 
 model Invoice {
@@ -127,6 +128,7 @@ model User {
   name           String
   organizationId String
   role           Role     @default(MEMBER)
+  reportPreferences Json?   // { receiveWeekly: boolean, reportTypes: string[] }
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -177,6 +179,29 @@ model WebhookLog {
   createdAt    DateTime @default(now())
 
   webhook      Webhook  @relation(fields: [webhookId], references: [id])
+}
+
+model ReportSchedule {
+  id             String      @id @default(cuid())
+  type           ReportType
+  frequency      Frequency
+  recipients     String[]    // Emails
+  lastSent       DateTime?
+  organizationId String
+  createdAt      DateTime    @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+enum ReportType {
+  CASH_FLOW
+  TAX_SUMMARY
+  FULL_DIGEST
+}
+
+enum Frequency {
+  WEEKLY
+  MONTHLY
 }
 
 enum Plan {
