@@ -1,6 +1,17 @@
 import OpenAI from "openai"
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let openaiInstance: OpenAI | null = null
+
+function getOpenAI() {
+  if (!openaiInstance) {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      throw new Error("Missing OPENAI_API_KEY environment variable")
+    }
+    openaiInstance = new OpenAI({ apiKey })
+  }
+  return openaiInstance
+}
 
 const categories = [
   "Software & SaaS",
@@ -27,6 +38,7 @@ Transaction: Description: "${description}", Amount: ${amount}, Vendor: ${vendor 
 Choose best category from: ${categories.join(", ")}. Also decide tax-deductible (true/false).
 Return JSON: { "category": string, "taxRelevant": boolean, "confidence": 0-1 }`
 
+      const openai = getOpenAI()
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
