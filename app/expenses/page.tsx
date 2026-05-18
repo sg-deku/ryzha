@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { AICategorizeButton } from "@/components/expenses/ai-categorize-button"
 
 export default async function ExpensesPage() {
   const session = await getServerSession(authOptions)
@@ -32,19 +33,21 @@ export default async function ExpensesPage() {
               <th className="px-6 py-3 text-sm font-semibold text-gray-600">Date</th>
               <th className="px-6 py-3 text-sm font-semibold text-gray-600">Description</th>
               <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-right">Amount</th>
+              <th className="px-6 py-3 text-sm font-semibold text-gray-600">Category</th>
               <th className="px-6 py-3 text-sm font-semibold text-gray-600">Status</th>
+              <th className="px-6 py-3 text-sm font-semibold text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {expenses.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                   No expenses found. Upload a CSV to get started.
                 </td>
               </tr>
             ) : (
               expenses.map((expense) => (
-                <tr key={expense.id}>
+                <tr key={expense.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm">
                     {new Date(expense.date).toLocaleDateString()}
                   </td>
@@ -54,14 +57,29 @@ export default async function ExpensesPage() {
                   <td className="px-6 py-4 text-sm text-right font-medium">
                     {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(expense.amount)}
                   </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {expense.category || "—"}
+                  </td>
                   <td className="px-6 py-4 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      expense.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                      expense.status === 'CATEGORIZED' ? 'bg-blue-100 text-blue-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {expense.status}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${
+                        expense.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                        expense.status === 'CATEGORIZED' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {expense.status}
+                      </span>
+                      {expense.status === 'REVIEWED' && (
+                        <span className="text-[10px] text-orange-600 font-medium italic">
+                          Requires manual review
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    {expense.status === 'PENDING' && (
+                      <AICategorizeButton expenseId={expense.id} />
+                    )}
                   </td>
                 </tr>
               ))
