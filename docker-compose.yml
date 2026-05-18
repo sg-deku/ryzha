@@ -11,6 +11,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
   app:
     build:
       context: .
@@ -20,10 +26,12 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/ryzha?schema=public"
+      REDIS_URL: "redis://redis:6379"
       NEXTAUTH_URL: "http://localhost:3000"
       NEXTAUTH_SECRET: "your-secret-here"
     depends_on:
       - db
+      - redis
 
 volumes:
   postgres_data:

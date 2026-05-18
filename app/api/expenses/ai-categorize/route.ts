@@ -27,7 +27,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 })
     }
 
-    const aiResult = await categorizeExpense(expense.description, expense.amount)
+    const aiResult = await categorizeExpense(
+      expense.description, 
+      expense.amount, 
+      session.user.organizationId
+    )
     
     // Auto-approve if confidence > 0.7
     const status = aiResult.confidence > 0.7 ? "CATEGORIZED" : "REVIEWED"

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { AICategorizeButton } from "@/components/expenses/ai-categorize-button"
+import { CategoryCell } from "@/components/expenses/category-cell"
 
 export default async function ExpensesPage() {
   const session = await getServerSession(authOptions)
@@ -58,7 +59,7 @@ export default async function ExpensesPage() {
                     {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(expense.amount)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {expense.category || "—"}
+                    <CategoryCell expenseId={expense.id} initialCategory={expense.category} />
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex flex-col gap-1">
