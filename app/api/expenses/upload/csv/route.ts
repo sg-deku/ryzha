@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { parseExpenseCSV } from "@/lib/parsers/csv-parser"
+import { detectAnomalies } from "@/lib/ai/anomaly-detector"
 import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
@@ -21,17 +22,24 @@ export async function POST(req: Request) {
     const text = await file.text()
     const parsed = parseExpenseCSV(text, columnMapping)
 
-    const expenses = await prisma.expense.createMany({
-      data: parsed.map((row: any) => ({
-        date: new Date(row.date),
-        description: row.description,
-        amount: parseFloat(row.amount),
-        status: "PENDING",
-        organizationId: session.user.organizationId
-      }))
-    })
+    let count = 0
+    for (const row of parsed) {
+      const expense = await prisma.expense.create({
+        data: {
+          date: new Date(row.date),
+          description: row.description,
+          amount: parseFloat(row.amount),
+          status: "PENDING",
+          organizationId: session.user.organizationId
+        }
+      })
+      
+      // Run anomaly detection for each new expense
+      await detectAnomalies(expense.id, session.user.organizationId)
+      count++
+    }
 
-    return NextResponse.json({ count: expenses.count })
+    return NextResponse.json({ count })
   } catch (error: any) {
     console.error("Upload error:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })

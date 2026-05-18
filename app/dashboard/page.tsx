@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { CashFlowForecast } from "./cashflow-chart"
+import { DashboardAlerts } from "./dashboard-alerts"
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +31,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      <DashboardAlerts />
+      
       <CashFlowForecast />
     </div>
   )

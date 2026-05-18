@@ -28,6 +28,7 @@ model Organization {
   taxRules TaxRule[]
   expenses Expense[]
   invoices Invoice[]
+  anomalies ExpenseAnomaly[]
 }
 
 model Invoice {
@@ -82,6 +83,35 @@ model Expense {
   updatedAt      DateTime      @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
+  anomalies    ExpenseAnomaly[]
+}
+
+model ExpenseAnomaly {
+  id             String      @id @default(cuid())
+  type           AnomalyType
+  description    String
+  confidence     Float       @default(1.0)
+  isFalsePositive Boolean     @default(false)
+  status         AnomalyStatus @default(PENDING)
+  expenseId      String
+  organizationId String
+  createdAt      DateTime    @default(now())
+
+  expense      Expense      @relation(fields: [expenseId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+}
+
+enum AnomalyType {
+  DUPLICATE
+  UNUSUAL_AMOUNT
+  WEEKEND_EXPENSE
+  UNUSUAL_CATEGORY
+}
+
+enum AnomalyStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
 }
 
 enum ExpenseStatus {
