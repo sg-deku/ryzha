@@ -148,22 +148,13 @@ export function Sidebar() {
             <SidebarItem
               href="/settings/users"
               icon={Users}
-              label="Users & Roles"
+              label="User Management"
               collapsed={collapsed}
             />
             <SidebarItem
               href="/workflow-studio"
               icon={Workflow}
               label="Workflow Studio"
-              collapsed={collapsed}
-            />
-          </Authorized>
-
-          <Authorized permission="roles:manage">
-            <SidebarItem
-              href="/settings/roles"
-              icon={Shield}
-              label="Roles"
               collapsed={collapsed}
             />
           </Authorized>
@@ -185,18 +176,6 @@ export function Sidebar() {
               href="/settings/integrations"
               icon={Globe}
               label="Integrations"
-              collapsed={collapsed}
-            />
-            <SidebarItem
-              href="/settings/p2p"
-              icon={ShoppingCart}
-              label="P2P Settings"
-              collapsed={collapsed}
-            />
-            <SidebarItem
-              href="/settings/o2c"
-              icon={Truck}
-              label="O2C Settings"
               collapsed={collapsed}
             />
             <SidebarItem

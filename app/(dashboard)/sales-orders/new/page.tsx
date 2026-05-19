@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Trash2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -14,9 +15,21 @@ import { toast } from "sonner"
 export default function NewSalesOrder() {
   const router = useRouter()
   const [customerId, setCustomerId] = useState("")
+  const [customers, setCustomers] = useState<any[]>([])
+  const [orderNumber, setOrderNumber] = useState(`SO-${Date.now().toString().slice(-6)}`)
+  const [isLoading, setIsLoading] = useState(false)
   const [lineItems, setLineItems] = useState([
     { description: "", quantity: 1, unitPrice: 0 }
   ])
+
+  useEffect(() => {
+    fetch("/api/customers")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setCustomers(data)
+      })
+      .catch(err => console.error(err))
+  }, [])
 
   const addLineItem = () => {
     setLineItems([...lineItems, { description: "", quantity: 1, unitPrice: 0 }])
@@ -36,9 +49,25 @@ export default function NewSalesOrder() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock submit for now
-    toast.success("Sales Order created successfully")
-    router.push("/sales-orders")
+    setIsLoading(true)
+    
+    try {
+      const res = await fetch("/api/sales-orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, orderNumber, lineItems })
+      })
+
+      if (!res.ok) throw new Error("Failed to create sales order")
+
+      toast.success("Sales Order created successfully")
+      router.push("/sales-orders")
+      router.refresh()
+    } catch (err) {
+      toast.error("Failed to create sales order")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -61,11 +90,20 @@ export default function NewSalesOrder() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="customer">Customer</Label>
-                <Input placeholder="Search customer..." value={customerId} onChange={(e) => setCustomerId(e.target.value)} />
+                <Select value={customerId} onValueChange={setCustomerId} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="soNumber">SO Number</Label>
-                <Input defaultValue={`SO-${Date.now().toString().slice(-6)}`} readOnly />
+                <Input value={orderNumber} onChange={e => setOrderNumber(e.target.value)} required />
               </div>
             </div>
           </CardContent>
@@ -97,28 +135,34 @@ export default function NewSalesOrder() {
                         value={item.description} 
                         onChange={(e) => updateLineItem(index, "description", e.target.value)}
                         placeholder="Item description"
+                        required
                       />
                     </TableCell>
                     <TableCell>
                       <Input 
                         type="number" 
+                        min="1"
                         value={item.quantity} 
-                        onChange={(e) => updateLineItem(index, "quantity", parseFloat(e.target.value))}
+                        onChange={(e) => updateLineItem(index, "quantity", e.target.value)}
+                        required
                       />
                     </TableCell>
                     <TableCell>
                       <Input 
                         type="number" 
+                        min="0"
+                        step="0.01"
                         value={item.unitPrice} 
-                        onChange={(e) => updateLineItem(index, "unitPrice", parseFloat(e.target.value))}
+                        onChange={(e) => updateLineItem(index, "unitPrice", e.target.value)}
+                        required
                       />
                     </TableCell>
                     <TableCell className="align-middle font-medium">
                       ${(item.quantity * item.unitPrice).toFixed(2)}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => removeLineItem(index)} disabled={lineItems.length === 1}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                      <Button variant="ghost" size="icon" type="button" onClick={() => removeLineItem(index)} disabled={lineItems.length === 1}>
+                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -129,15 +173,15 @@ export default function NewSalesOrder() {
             <div className="mt-4 flex justify-end">
               <div className="text-right space-y-1">
                 <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-2xl font-bold">${total.toLocaleString()}</p>
+                <p className="text-2xl font-bold">${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <div className="flex justify-end gap-4">
-          <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
-          <Button type="submit">Create Sales Order</Button>
+          <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? "Creating..." : "Create Sales Order"}</Button>
         </div>
       </form>
     </div>

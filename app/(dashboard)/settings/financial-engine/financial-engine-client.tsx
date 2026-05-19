@@ -100,13 +100,15 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
       
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="ai">AI Config</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue Rules</TabsTrigger>
-            <TabsTrigger value="audit">Audit Rules</TabsTrigger>
+            <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            <TabsTrigger value="audit">Audit</TabsTrigger>
             <TabsTrigger value="fpa">FP&A</TabsTrigger>
             <TabsTrigger value="voice-sms">Voice & SMS</TabsTrigger>
+            <TabsTrigger value="p2p">P2P</TabsTrigger>
+            <TabsTrigger value="o2c">O2C</TabsTrigger>
           </TabsList>
           
           <TabsContent value="general" className="space-y-4 pt-4">
@@ -350,6 +352,94 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                 <div className="space-y-2">
                   <Label htmlFor="smsRecipientNumber">SMS Recipient Number</Label>
                   <Input placeholder="+1234567890" {...form.register("smsRecipientNumber")} />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="p2p" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Approval Workflow</CardTitle>
+                <CardDescription>Configure how purchase orders and invoices are approved.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Auto-Approve Low Value POs</Label>
+                    <p className="text-sm text-muted-foreground">POs below the threshold will be approved automatically.</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5 pt-2">
+                  <Label htmlFor="limit">Auto-Approve Limit ($)</Label>
+                  <Input type="number" id="limit" defaultValue="500" />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Three-Way Matching</Label>
+                    <p className="text-sm text-muted-foreground">Require invoice to match both PO and Receiving records.</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Early Payment Discounts</CardTitle>
+                <CardDescription>Optimize cash flow by capturing vendor discounts.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Alert on Discount Opportunities</Label>
+                    <p className="text-sm text-muted-foreground">Notify when early payment would result in significant savings.</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="o2c" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Credit Management</CardTitle>
+                <CardDescription>Manage customer risk and credit availability.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="credit">Default Credit Limit ($)</Label>
+                  <Input type="number" id="credit" defaultValue="5000" />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Auto-Hold Orders</Label>
+                    <p className="text-sm text-muted-foreground">Place orders on hold if customer is over their credit limit.</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Collections & Dunning</CardTitle>
+                <CardDescription>Configure automated payment reminders.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Enable Automated Dunning</Label>
+                    <p className="text-sm text-muted-foreground">Automatically send reminders for past-due invoices.</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5 pt-2">
+                  <Label htmlFor="frequency">First Reminder (Days After Due)</Label>
+                  <Input type="number" id="frequency" defaultValue="3" />
                 </div>
               </CardContent>
             </Card>
