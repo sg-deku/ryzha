@@ -8,6 +8,9 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 
+
+export const dynamic = "force-dynamic";
+
 export default async function CustomerDetailsPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect("/login")

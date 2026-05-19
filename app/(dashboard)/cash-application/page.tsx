@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Brain, CheckCircle2, Search } from "lucide-react"
 
+
+export const dynamic = "force-dynamic";
+
 export default async function CashApplicationPage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")

@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { AlertCircle, Send, PhoneCall } from "lucide-react"
 
+
+export const dynamic = "force-dynamic";
+
 export default async function CollectionsPage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")

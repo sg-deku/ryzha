@@ -9,6 +9,9 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
+
+export const dynamic = "force-dynamic";
+
 export default async function SalesOrderDetailsPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect("/login")

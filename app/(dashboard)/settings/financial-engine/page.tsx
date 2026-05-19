@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import FinancialEngineClient from "./financial-engine-client"
 
+
+export const dynamic = "force-dynamic";
+
 export default async function FinancialEnginePage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")

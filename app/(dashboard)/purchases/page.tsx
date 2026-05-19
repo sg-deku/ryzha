@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus, ShoppingCart } from "lucide-react"
 
+
+export const dynamic = "force-dynamic";
+
 export default async function PurchasesPage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")
