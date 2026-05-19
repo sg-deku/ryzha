@@ -32,6 +32,9 @@ const financialSettingsSchema = z.object({
   voiceScriptTemplate: z.string(),
   enableSMS: z.boolean(),
   smsRecipientNumber: z.string().nullable(),
+  aiProvider: z.string().nullable(),
+  aiModel: z.string().min(1),
+  aiApiKey: z.string().nullable(),
 })
 
 type FinancialSettingsValues = z.infer<typeof financialSettingsSchema>
@@ -59,6 +62,9 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
       voiceScriptTemplate: "Karina, a {{amount}} credit has been reconciled under ASC 606. This improves our net income for the quarter and extends our cash runway by {{runwayDays}} days, moving our 'Zero Cash Date' to {{zeroCashDate}}. We are currently {{percentAhead}}% ahead of our financial plan.",
       enableSMS: false,
       smsRecipientNumber: "",
+      aiProvider: "openai",
+      aiModel: "gpt-4o-mini",
+      aiApiKey: "",
     },
   })
 
@@ -94,8 +100,9 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
       
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="ai">AI Config</TabsTrigger>
             <TabsTrigger value="revenue">Revenue Rules</TabsTrigger>
             <TabsTrigger value="audit">Audit Rules</TabsTrigger>
             <TabsTrigger value="fpa">FP&A</TabsTrigger>
@@ -148,6 +155,57 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                       {...form.register("averageMonthlyExpenses", { valueAsNumber: true })} 
                     />
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="ai" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Model Configuration</CardTitle>
+                <CardDescription>
+                  Configure the AI model and API key used by the agents.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="aiProvider">AI Provider</Label>
+                  <Select 
+                    value={form.watch("aiProvider") || "openai"} 
+                    onValueChange={(val) => form.setValue("aiProvider", val, { shouldDirty: true })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="anthropic">Anthropic</SelectItem>
+                      <SelectItem value="gemini">Google Gemini</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="aiModel">AI Model</Label>
+                  <Input 
+                    id="aiModel" 
+                    {...form.register("aiModel")} 
+                    placeholder="e.g., gpt-4o, claude-3-5-sonnet-20240620, gemini-1.5-pro"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Specify the exact model string for the selected provider.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="aiApiKey">API Key</Label>
+                  <Input 
+                    id="aiApiKey" 
+                    type="password"
+                    {...form.register("aiApiKey")} 
+                    placeholder="Enter your API key (leave blank to use system default)"
+                  />
                 </div>
               </CardContent>
             </Card>

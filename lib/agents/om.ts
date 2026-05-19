@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getFinancialContext } from "@/lib/ai/rag"
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runOMAgent(transactionId: string) {
   const tx = await prisma.transaction.findUnique({ 
@@ -26,7 +26,7 @@ export async function runOMAgent(transactionId: string) {
     try {
       const context = await getFinancialContext(`How should we recognize revenue for: ${tx.description}?`, tx.organizationId)
       
-      const model = new ChatOpenAI({
+      const model = await getLLM(tx.organizationId, {
         modelName: "gpt-4o-mini",
         temperature: 0,
       })

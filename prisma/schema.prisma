@@ -198,6 +198,9 @@ model FinancialSettings {
   voiceScriptTemplate          String   @default("Karina, a {{amount}} credit has been reconciled under ASC 606. This improves our net income for the quarter and extends our cash runway by {{runwayDays}} days, moving our 'Zero Cash Date' to {{zeroCashDate}}. We are currently {{percentAhead}}% ahead of our financial plan.")
   enableSMS                    Boolean  @default(false)
   smsRecipientNumber           String?
+  aiModel                      String   @default("gpt-4o-mini") // Can be configurable by user (e.g. gpt-4, claude-3-haiku)
+  aiApiKey                     String?  // Optional user-provided API key for their preferred provider
+  aiProvider                   String?  @default("openai")
   updatedAt                    DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])

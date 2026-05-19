@@ -1,7 +1,7 @@
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runCustomerValidationAgent(customerData: any, organizationId: string) {
-  const model = new ChatOpenAI({ modelName: "gpt-4o-mini", temperature: 0 })
+  const model = await getLLM(organizationId, { modelName: "gpt-4o-mini", temperature: 0 })
 
   const systemPrompt = "Validate the customer data for completeness and potential fraud risk."
   

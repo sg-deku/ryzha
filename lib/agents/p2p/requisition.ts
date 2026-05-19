@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma"
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"
 
 export async function runRequisitionAgent(requisitionData: any, organizationId: string) {
-  const model = new ChatOpenAI({ modelName: "gpt-4o-mini", temperature: 0 })
+  const model = await getLLM(organizationId, { modelName: "gpt-4o-mini", temperature: 0 })
 
   const systemMessage = new SystemMessage(`
     You are an AI Purchase Requisition Agent. 

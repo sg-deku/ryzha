@@ -1,7 +1,7 @@
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runInvoiceCaptureAgent(invoiceImage: string, organizationId: string) {
-  const model = new ChatOpenAI({ modelName: "gpt-4o-mini", temperature: 0 })
+  const model = await getLLM(organizationId, { modelName: "gpt-4o-mini", temperature: 0 })
 
   // Mocking OCR + LLM extraction
   const systemPrompt = "Extract vendor, amount, date, and line items from this invoice image data."

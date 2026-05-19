@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 import { z } from "zod"
 
 const extractionSchema = z.object({
@@ -19,7 +19,7 @@ export async function runR2RAgent(transactionId: string) {
   // AI-powered extraction if description exists
   if (transaction.description && process.env.OPENAI_API_KEY) {
     try {
-      const model = new ChatOpenAI({
+      const model = await getLLM(transaction.organizationId, {
         modelName: "gpt-4o-mini",
         temperature: 0,
       })

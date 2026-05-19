@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runFPAgent(transactionId: string) {
   const tx = await prisma.transaction.findUnique({
@@ -62,7 +62,7 @@ export async function runFPAgent(transactionId: string) {
   // Upgrade with AI Narrative & Scenario Analysis
   if (process.env.OPENAI_API_KEY) {
     try {
-      const model = new ChatOpenAI({
+      const model = await getLLM(tx.organizationId, {
         modelName: "gpt-4o-mini",
         temperature: 0.7,
       })

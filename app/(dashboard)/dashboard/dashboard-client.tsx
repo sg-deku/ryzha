@@ -33,9 +33,7 @@ export function DashboardClient({ userName, orgId, pendingPurchases = 0, overdue
   return (
     <div className="space-y-8">
       {/* KPI row – white cards on light gray */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KPIGrid />
-      </div>
+      <KPIGrid />
 
       {(pendingPurchases > 0 || overdueSales > 0) && (
         <div className="grid gap-6 md:grid-cols-2">

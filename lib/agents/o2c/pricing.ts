@@ -1,7 +1,7 @@
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runPricingAgent(orderData: any, organizationId: string) {
-  const model = new ChatOpenAI({ modelName: "gpt-4o-mini", temperature: 0 })
+  const model = await getLLM(organizationId, { modelName: "gpt-4o-mini", temperature: 0 })
 
   const systemPrompt = "Suggest optimal pricing and potential discounts for this order based on customer history and current promotions."
   

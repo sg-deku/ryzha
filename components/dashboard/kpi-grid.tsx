@@ -33,8 +33,8 @@ export function KPIGrid() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="h-32 bg-muted rounded-xl animate-pulse" />
         ))}
       </div>
@@ -42,7 +42,7 @@ export function KPIGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
       {kpis.map((kpi, i) => (
         <KPICard
           key={kpi.title}

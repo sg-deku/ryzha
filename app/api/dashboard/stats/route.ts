@@ -25,6 +25,12 @@ export async function GET() {
       value: "$3,120",
       change: "+1.2%",
       data: [500, 1000, 1200, 1800, 2200, 2800, 3120]
+    },
+    {
+      title: "Runway",
+      value: "14.2 mo",
+      change: "+0.5 mo",
+      data: [12.1, 12.5, 12.8, 13.0, 13.5, 13.8, 14.2]
     }
   ])
 }

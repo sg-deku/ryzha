@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import crypto from "crypto"
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runAuditorAgent(transactionId: string) {
   const tx = await prisma.transaction.findUnique({
@@ -39,7 +39,7 @@ export async function runAuditorAgent(transactionId: string) {
   // 2. AI-powered investigative reasoning
   if (process.env.OPENAI_API_KEY) {
     try {
-      const model = new ChatOpenAI({
+      const model = await getLLM(tx.organizationId, {
         modelName: "gpt-4o-mini",
         temperature: 0,
       })

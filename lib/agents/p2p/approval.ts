@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma"
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runApprovalAgent(poId: string, organizationId: string) {
-  const model = new ChatOpenAI({ modelName: "gpt-4o-mini", temperature: 0 })
+  const model = await getLLM(organizationId, { modelName: "gpt-4o-mini", temperature: 0 })
 
   // In a real app, we'd fetch the PO and check against approval rules
   // const po = await prisma.purchaseOrder.findUnique({ where: { id: poId } })

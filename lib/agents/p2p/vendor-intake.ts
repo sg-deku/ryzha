@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runVendorIntakeAgent(organizationId: string, input: { name?: string, email?: string, text?: string }) {
   let name = input.name || "Unknown Vendor"
@@ -9,7 +9,7 @@ export async function runVendorIntakeAgent(organizationId: string, input: { name
 
   if (input.text && process.env.OPENAI_API_KEY) {
     try {
-      const model = new ChatOpenAI({
+      const model = await getLLM(organizationId, {
         modelName: "gpt-4o-mini",
         temperature: 0,
       })

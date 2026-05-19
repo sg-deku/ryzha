@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma"
-import { ChatOpenAI } from "@langchain/openai"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runOrderIntakeAgent(organizationId: string, input: { text: string }) {
   if (!process.env.OPENAI_API_KEY) return null
 
   try {
-    const model = new ChatOpenAI({
+    const model = await getLLM(organizationId, {
       modelName: "gpt-4o-mini",
       temperature: 0,
     })
