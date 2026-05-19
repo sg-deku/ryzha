@@ -10,19 +10,22 @@ import {
   ChevronRight,
   LayoutDashboard,
   Users,
-  ShieldAlert,
+  Shield,
   UserCircle,
+  Building,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SidebarItem } from "./sidebar-item"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Authorized } from "@/components/auth/authorized"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { useSession } from "next-auth/react"
 
 export function Sidebar() {
+  const { data: session } = useSession()
   const [collapsed, setCollapsed] = React.useState(false)
   const [mounted, setMounted] = React.useState(false)
-  const [settingsOpen, setSettingsOpen] = React.useState(false)
 
   React.useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed")
@@ -41,13 +44,13 @@ export function Sidebar() {
   if (!mounted) return null
 
   return (
-    <TooltipProvider>
-      <aside
-        className={cn(
-          "relative hidden h-screen border-r bg-card transition-all duration-300 md:flex flex-col",
-          collapsed ? "w-[72px]" : "w-64"
-        )}
-      >
+      <TooltipProvider>
+        <aside
+          className={cn(
+            "flex h-screen flex-col border-r bg-background transition-all duration-300",
+            collapsed ? "w-16" : "w-64"
+          )}
+        >
         <div className="flex h-16 items-center border-b px-4">
           <div className="flex items-center gap-2 font-bold">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -107,14 +110,27 @@ export function Sidebar() {
           <Authorized permission="roles:manage">
             <SidebarItem
               href="/settings/roles"
-              icon={ShieldAlert}
+              icon={Shield}
               label="Roles"
+              collapsed={collapsed}
+            />
+          </Authorized>
+
+          <Authorized permission="org:manage">
+            <SidebarItem
+              href="/settings/organization"
+              icon={Building}
+              label="Organization"
               collapsed={collapsed}
             />
           </Authorized>
         </nav>
 
-        <div className="border-t p-2">
+        <div className="border-t p-2 space-y-2">
+          <div className={cn("flex items-center", collapsed ? "justify-center" : "px-2 justify-between")}>
+            {!collapsed && <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Appearance</span>}
+            <ThemeToggle />
+          </div>
           <Button
             variant="ghost"
             size="icon"

@@ -4,23 +4,35 @@
 
 @layer base {
   :root {
+    /* Grayscale base – sober, neutral */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
+    
+    /* Primary – slate blue (professional, calm) */
     --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
+    
+    /* Secondary – soft gray for subtle elements */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
+    
+    /* Muted – for backgrounds of secondary sections */
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
+    
+    /* Accent – for highlights and interactive elements */
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+    
+    /* Borders – subtle separation */
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
+    
     --radius: 0.5rem;
   }
 
@@ -44,8 +56,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-muted/20 text-foreground;  /* Light gray page background */
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .card-default {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+  .card-elevated {
+    @apply rounded-lg border bg-card text-card-foreground shadow-md;
   }
 }
 
@@ -56,5 +77,29 @@
   }
   .dark .bg-grid-pattern {
     background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 1px);
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.5s ease-out forwards;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

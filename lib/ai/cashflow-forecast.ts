@@ -1,7 +1,18 @@
 import OpenAI from "openai"
 import { prisma } from "@/lib/prisma"
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let openaiInstance: OpenAI | null = null
+
+function getOpenAI() {
+  if (!openaiInstance) {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      throw new Error("Missing OPENAI_API_KEY environment variable")
+    }
+    openaiInstance = new OpenAI({ apiKey })
+  }
+  return openaiInstance
+}
 
 export interface ForecastParams {
   organizationId: string
@@ -59,6 +70,7 @@ Tasks:
    - "latePaymentRisks": Array of { invoiceNumber: string, client: string, riskLevel: "low" | "medium" | "high" }
    - "insights": Array of strings (e.g., "Balance predicted below $5000 on day 45")`
 
+  const openai = getOpenAI()
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: prompt }],

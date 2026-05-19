@@ -20,19 +20,23 @@ export default async function InvoicesPage() {
   })
 
   return (
-    <div className="container mx-auto py-6 space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+          <p className="text-muted-foreground">Manage your client billing and payments.</p>
+        </div>
+        <Button asChild>
+          <Link href="/invoices/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Invoice
+          </Link>
+        </Button>
+      </div>
+
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold">Invoices</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">Manage your client billing and payments.</p>
-          </div>
-          <Button asChild>
-            <Link href="/invoices/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Invoice
-            </Link>
-          </Button>
+        <CardHeader>
+          <CardTitle>Invoice History</CardTitle>
         </CardHeader>
         <CardContent>
           <InvoiceTable initialInvoices={JSON.parse(JSON.stringify(invoices))} />

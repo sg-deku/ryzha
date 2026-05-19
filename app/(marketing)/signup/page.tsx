@@ -2,94 +2,65 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { signIn } from "next-auth/react"
-import { toast } from "sonner"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-
-export const dynamic = "force-dynamic"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { toast } from "sonner"
+import Link from "next/link"
 
 export default function SignupPage() {
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [orgName, setOrgName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    organizationName: ""
-  })
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
+    
     try {
-      const response = await fetch("/api/auth/signup", {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ name, email, password, orgName }),
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Something went wrong")
-      }
-
-      toast.success("Account created successfully! Logging you in...")
-
-      // Automatically sign in
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false
-      })
-
-      if (result?.error) {
-        toast.error("Signup successful but auto-login failed. Please login manually.")
+      if (res.ok) {
+        toast.success("Account created! Please sign in.")
         router.push("/login")
       } else {
-        router.push("/dashboard")
+        const data = await res.json()
+        toast.error(data.message || "Something went wrong. Please try again.")
       }
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error) {
+      toast.error("An error occurred. Please try again later.")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50/50 px-4 py-12 dark:bg-gray-950">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+    <div className="flex-1 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary animate-fade-up">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
           <CardDescription>
-            Enter your information to get started with Ryzha
+            Join Ryzha and start managing your startup's finances
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="organizationName">Organization Name</Label>
-              <Input
-                id="organizationName"
-                placeholder="Acme Inc."
-                required
-                value={formData.organizationName}
-                onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Your Name</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
                 placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -97,10 +68,20 @@ export default function SignupPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="john@example.com"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="orgName">Organization Name</Label>
+              <Input
+                id="orgName"
+                placeholder="Acme Inc"
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -108,22 +89,26 @@ export default function SignupPage() {
               <Input
                 id="password"
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Sign up"}
+          <CardFooter className="flex flex-col gap-4">
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? "Creating account..." : "Create Account"}
             </Button>
-            <div className="text-center text-sm text-gray-500">
+            <p className="text-sm text-center text-muted-foreground">
               Already have an account?{" "}
-              <Link className="font-semibold text-primary hover:underline" href="/login">
+              <Link href="/login" className="font-medium text-primary hover:underline">
                 Log in
               </Link>
-            </div>
+            </p>
           </CardFooter>
         </form>
       </Card>

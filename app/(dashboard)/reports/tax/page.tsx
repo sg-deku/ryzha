@@ -1,6 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Download, FileText, AlertTriangle } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
@@ -51,164 +57,198 @@ export default function TaxReportPage() {
   const handleExportPDF = () => window.open(getExportUrl('pdf'))
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Tax Report</h1>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tax Report</h1>
+          <p className="text-muted-foreground">Comprehensive tax reporting and compliance.</p>
+        </div>
         <div className="flex gap-2">
-          <button 
-            onClick={handleExportPDF}
-            className="px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50"
-          >
+          <Button variant="outline" onClick={handleExportPDF}>
+            <FileText className="mr-2 h-4 w-4" />
             Download PDF
-          </button>
-          <button 
-            onClick={handleExportCSV}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
+          </Button>
+          <Button onClick={handleExportCSV}>
+            <Download className="mr-2 h-4 w-4" />
             Export CSV
-          </button>
+          </Button>
         </div>
       </div>
 
       {report?.safeHarborWarning && (
-        <div className="mb-8 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg flex items-center gap-3">
-          <span className="text-2xl">⚠️</span>
-          <p className="font-medium text-sm">{report.safeHarborWarning}</p>
-        </div>
+        <Card className="bg-amber-50 border-amber-200 text-amber-900">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <p className="font-medium text-sm">{report.safeHarborWarning}</p>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="grid grid-cols-4 gap-4 mb-8 p-4 bg-gray-50 border rounded-lg">
-        <div>
-          <label className="block text-sm font-medium mb-1">Year</label>
-          <select 
-            value={year} 
-            onChange={(e) => setYear(parseInt(e.target.value))}
-            className="w-full p-2 border rounded"
-          >
-            {[2023, 2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Quarter</label>
-          <select 
-            value={quarter} 
-            onChange={(e) => setQuarter(parseInt(e.target.value))}
-            className="w-full p-2 border rounded"
-          >
-            <option value={1}>Q1 (Jan - Mar)</option>
-            <option value={2}>Q2 (Apr - Jun)</option>
-            <option value={3}>Q3 (Jul - Sep)</option>
-            <option value={4}>Q4 (Oct - Dec)</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Jurisdiction (ISO)</label>
-          <input 
-            type="text"
-            value={jurisdiction}
-            onChange={(e) => setJurisdiction(e.target.value.toUpperCase())}
-            placeholder="e.g. DE, NY"
-            maxLength={2}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Tax Rate %</label>
-          <input 
-            type="number"
-            value={taxRate}
-            onChange={(e) => setTaxRate(e.target.value)}
-            placeholder="e.g. 19"
-            className="w-full p-2 border rounded"
-          />
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Filters</CardTitle>
+          <CardDescription>Adjust the parameters below to filter your tax report.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Year</label>
+              <Select value={year.toString()} onValueChange={(v) => setYear(parseInt(v))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2023, 2024, 2025, 2026].map(y => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Quarter</label>
+              <Select value={quarter.toString()} onValueChange={(v) => setQuarter(parseInt(v))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select quarter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Q1 (Jan - Mar)</SelectItem>
+                  <SelectItem value="2">Q2 (Apr - Jun)</SelectItem>
+                  <SelectItem value="3">Q3 (Jul - Sep)</SelectItem>
+                  <SelectItem value="4">Q4 (Oct - Dec)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Jurisdiction (ISO)</label>
+              <Input 
+                value={jurisdiction}
+                onChange={(e) => setJurisdiction(e.target.value.toUpperCase())}
+                placeholder="e.g. DE, NY"
+                maxLength={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tax Rate %</label>
+              <Input 
+                type="number"
+                value={taxRate}
+                onChange={(e) => setTaxRate(e.target.value)}
+                placeholder="e.g. 19"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {loading ? (
-        <div className="text-center py-12">Loading report...</div>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
       ) : report ? (
         <div className="space-y-8">
-          <div className="grid grid-cols-4 gap-6">
-            <div className="p-6 bg-white border rounded-lg shadow-sm">
-              <p className="text-sm text-gray-500 mb-1">Total Sales</p>
-              <p className="text-2xl font-bold">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(report.totalSales)}
-              </p>
-            </div>
-            <div className="p-6 bg-white border rounded-lg shadow-sm">
-              <p className="text-sm text-gray-500 mb-1">Tax Collected</p>
-              <p className="text-2xl font-bold text-red-600">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(report.totalTaxCollected)}
-              </p>
-            </div>
-            <div className="p-6 bg-white border rounded-lg shadow-sm">
-              <p className="text-sm text-gray-500 mb-1">Deductible Tax</p>
-              <p className="text-2xl font-bold text-green-600">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(report.totalDeductibleTax)}
-              </p>
-            </div>
-            <div className="p-6 bg-blue-50 border border-blue-100 rounded-lg shadow-sm">
-              <p className="text-sm text-blue-600 mb-1">Net Tax Owed</p>
-              <p className="text-2xl font-bold text-blue-800">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(report.netOwed)}
-              </p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Sales</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-2xl font-bold">
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(report.totalSales)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Tax Collected</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-2xl font-bold text-red-600">
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(report.totalTaxCollected)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Deductible Tax</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-2xl font-bold text-green-600">
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(report.totalDeductibleTax)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm font-medium text-primary">Net Tax Owed</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-2xl font-bold text-primary">
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(report.netOwed)}
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           {Object.keys(report.salesByRate).length > 0 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Sales by Tax Rate</h2>
-              <div className="grid grid-cols-4 gap-4">
-                {Object.entries(report.salesByRate).map(([rate, data]: [string, any]) => (
-                  <div key={rate} className="p-4 bg-gray-50 border rounded-lg">
-                    <p className="text-sm font-semibold text-gray-600">{rate}% Rate</p>
-                    <div className="mt-2 space-y-1">
-                      <p className="text-xs text-gray-500">Sales: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.sales)}</p>
-                      <p className="text-xs text-gray-500">Tax: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.tax)}</p>
+            <Card>
+              <CardHeader>
+                <CardTitle>Sales by Tax Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {Object.entries(report.salesByRate).map(([rate, data]: [string, any]) => (
+                    <div key={rate} className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-sm font-semibold">{rate}% Rate</p>
+                      <div className="mt-2 space-y-1">
+                        <p className="text-xs text-muted-foreground">Sales: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.sales)}</p>
+                        <p className="text-xs text-muted-foreground">Tax: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.tax)}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Transaction Breakdown</h2>
-            <div className="bg-white border rounded-lg overflow-hidden">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b text-sm font-medium text-gray-600">
-                  <tr>
-                    <th className="px-6 py-3">Date</th>
-                    <th className="px-6 py-3">Reference</th>
-                    <th className="px-6 py-3">Jurisdiction</th>
-                    <th className="px-6 py-3">Rate</th>
-                    <th className="px-6 py-3 text-right">Amount</th>
-                    <th className="px-6 py-3 text-right">Tax</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y text-sm">
+          <Card>
+            <CardHeader>
+              <CardTitle>Transaction Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-6">Date</TableHead>
+                    <TableHead>Reference</TableHead>
+                    <TableHead>Jurisdiction</TableHead>
+                    <TableHead>Rate</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right pr-6">Tax</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {report.details.map((row: any, i: number) => (
-                    <tr key={i}>
-                      <td className="px-6 py-4">{new Date(row.date).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 font-medium">{row.reference}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-1 bg-gray-100 rounded text-xs">
+                    <TableRow key={i}>
+                      <TableCell className="pl-6">{new Date(row.date).toLocaleDateString()}</TableCell>
+                      <TableCell className="font-medium">{row.reference}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium">
                           {row.jurisdiction}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">{row.rate}%</td>
-                      <td className="px-6 py-4 text-right">
+                      </TableCell>
+                      <TableCell>{row.rate}%</TableCell>
+                      <TableCell className="text-right">
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.amount)}
-                      </td>
-                      <td className="px-6 py-4 text-right font-medium">
+                      </TableCell>
+                      <TableCell className="text-right pr-6 font-medium">
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.tax)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       ) : null}
     </div>

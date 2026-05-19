@@ -1,25 +1,18 @@
-"use client"
+import { MainLayout } from "@/components/layouts/main-layout"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
-import { Sidebar } from "@/components/layouts/sidebar"
-import { DashboardHeader } from "@/components/layouts/dashboard-header"
-import { PageTransition } from "@/components/page-transition"
-
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar />
-      <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-        <DashboardHeader />
-        <main className="flex-1 p-4 md:p-6">
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </main>
-      </div>
-    </div>
-  )
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    redirect("/login")
+  }
+
+  return <MainLayout>{children}</MainLayout>
 }

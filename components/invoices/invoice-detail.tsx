@@ -27,6 +27,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 interface LineItem {
   id: string
@@ -96,10 +104,15 @@ export function InvoiceDetail({ invoice: initialInvoice }: { invoice: Invoice })
   return (
     <div className="container py-8 max-w-5xl">
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-        <button onClick={() => router.push("/invoices")} className="hover:text-foreground flex items-center gap-1">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => router.push("/invoices")} 
+          className="hover:text-foreground flex items-center gap-1 h-auto p-0"
+        >
           <ArrowLeft className="h-4 w-4" />
           Back to Invoices
-        </button>
+        </Button>
         <ChevronRight className="h-4 w-4" />
         <span className="text-foreground font-medium">Invoice {invoice.invoiceNumber}</span>
       </div>
@@ -158,30 +171,30 @@ export function InvoiceDetail({ invoice: initialInvoice }: { invoice: Invoice })
               <CardTitle className="text-lg">Line Items</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-y bg-muted/30">
-                    <th className="p-4 text-left font-medium text-muted-foreground">Description</th>
-                    <th className="p-4 text-right font-medium text-muted-foreground w-20">Qty</th>
-                    <th className="p-4 text-right font-medium text-muted-foreground w-32">Price</th>
-                    <th className="p-4 text-right font-medium text-muted-foreground w-32">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="pl-6">Description</TableHead>
+                    <TableHead className="text-right w-20">Qty</TableHead>
+                    <TableHead className="text-right w-32">Price</TableHead>
+                    <TableHead className="text-right pr-6 w-32">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {invoice.lineItems.map((item) => (
-                    <tr key={item.id}>
-                      <td className="p-4">{item.description}</td>
-                      <td className="p-4 text-right">{item.quantity}</td>
-                      <td className="p-4 text-right">
+                    <TableRow key={item.id}>
+                      <TableCell className="pl-6">{item.description}</TableCell>
+                      <TableCell className="text-right">{item.quantity}</TableCell>
+                      <TableCell className="text-right">
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(item.unitPrice)}
-                      </td>
-                      <td className="p-4 text-right font-medium">
+                      </TableCell>
+                      <TableCell className="text-right pr-6 font-medium">
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(item.amount)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
 
               <div className="p-6 border-t flex justify-end bg-muted/10">
                 <div className="w-64 space-y-3">

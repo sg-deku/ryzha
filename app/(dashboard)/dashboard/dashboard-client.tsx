@@ -7,11 +7,11 @@ import { TransactionFeed } from "@/components/dashboard/transaction-feed"
 import { TransactionList } from "@/components/dashboard/transaction-list"
 import { DashboardAlerts } from "./dashboard-alerts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { SkeletonCard } from "@/components/ui/skeleton-card"
 
 const CashFlowForecast = dynamic(() => import("./cashflow-chart").then(mod => mod.CashFlowForecast), {
   ssr: false,
-  loading: () => <div className="h-[400px] w-full bg-muted animate-pulse rounded-xl" />
+  loading: () => <SkeletonCard />
 })
 
 const AnomalyCarousel = dynamic(() => import("@/components/dashboard/anomaly-carousel").then(mod => mod.AnomalyCarousel), {
@@ -26,37 +26,51 @@ interface DashboardClientProps {
 
 export function DashboardClient({ userName, orgId }: DashboardClientProps) {
   return (
-    <div className="container mx-auto py-6 space-y-6 animate-fade-in">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
-          <div>
-            <CardTitle className="text-2xl font-bold">Dashboard</CardTitle>
-            <p className="text-sm text-muted-foreground">Welcome back, {userName}</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <div className="text-right hidden sm:block">
-              <p className="text-xs text-muted-foreground uppercase font-semibold">Cash Position</p>
-              <p className="text-xl font-bold text-green-600">$15,000.00</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          <AnomalyCarousel />
-          <KPIGrid />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <CashFlowForecast />
-              <TransactionFeed orgId={orgId} />
-            </div>
-            <div className="space-y-6">
-              <DashboardAlerts />
-              <TransactionList orgId={orgId} />
-              <ActivityFeed />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-8">
+      {/* KPI row – white cards on light gray */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <KPIGrid />
+      </div>
+
+      {/* Simulator + Agent Log – side by side on large screens */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Cash Flow Forecast</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CashFlowForecast />
+          </CardContent>
+        </Card>
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Agent Log</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ActivityFeed />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Audit + Runway – bottom row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="card-default">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Audit Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DashboardAlerts />
+          </CardContent>
+        </Card>
+        <Card className="card-default">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Runway Chart</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TransactionList orgId={orgId} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
-  )
+  );
 }

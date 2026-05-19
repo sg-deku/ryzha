@@ -1,36 +1,41 @@
+import { ThemeToggle } from "@/components/theme-toggle"
+import Link from "next/link"
+
 export default function MarketingLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-14 flex items-center border-b">
-        <a className="flex items-center justify-center" href="/">
-          <span className="font-bold text-xl">Ryzha</span>
-        </a>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <a className="text-sm font-medium hover:underline underline-offset-4" href="/login">
-            Login
-          </a>
-          <a className="text-sm font-medium hover:underline underline-offset-4" href="/signup">
-            Sign up
-          </a>
-        </nav>
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 font-bold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              R
+            </div>
+            <span className="text-xl">Ryzha</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Link 
+              href="/login"
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
+              Log in
+            </Link>
+          </div>
+        </div>
       </header>
-      <main className="flex-1">
+      <main className="flex-1 flex flex-col bg-grid-pattern">
         {children}
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-muted-foreground">© 2024 Ryzha Inc. All rights reserved.</p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <a className="text-xs hover:underline underline-offset-4" href="#">
-            Terms of Service
-          </a>
-          <a className="text-xs hover:underline underline-offset-4" href="#">
-            Privacy
-          </a>
-        </nav>
+      <footer className="border-t bg-muted/50 mt-auto py-6 md:py-0">
+        <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Ryzha. All rights reserved.
+          </p>
+        </div>
       </footer>
     </div>
   )
