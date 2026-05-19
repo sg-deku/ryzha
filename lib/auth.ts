@@ -20,6 +20,7 @@ declare module "next-auth" {
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "default_development_secret_do_not_use_in_production",
   providers: [
     CredentialsProvider({
       name: "credentials",
