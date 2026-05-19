@@ -14,60 +14,51 @@ export function LiveExecutionView({ executionId }: { executionId: string | null 
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const orgId = session?.user?.organizationId
-    if (!executionId || !orgId) return
+    if (!executionId) return
 
-    setLogs([`Connecting to execution stream for ${executionId}...`])
+    setLogs([`Connecting to execution logs for ${executionId}...`])
     setStatus("running")
 
-    const eventSource = new EventSource(`/api/events?orgId=${orgId}`)
-    
-    eventSource.onmessage = (event) => {
+    let intervalId: NodeJS.Timeout
+
+    const fetchLogs = async () => {
       try {
-        const data = JSON.parse(event.data)
-        
-        // Match the event to the current execution ID
-        const matches = data.transactionId === executionId || 
-                        data.vendorInvoiceId === executionId || 
-                        data.salesOrderId === executionId
+        const res = await fetch(`/api/workflow-studio/logs?executionId=${executionId}`)
+        if (res.ok) {
+          const data = await res.json()
+          
+          if (data.logs && data.logs.length > 0) {
+            setLogs(prev => {
+              // Ensure we don't just infinitely push the same logs if polling returns the whole array
+              // The API now returns the FULL array of formatted string logs. We can just replace it.
+              return [`Connected to execution logs for ${executionId}...`, ...data.logs];
+            })
+          }
 
-        if (matches) {
-          const logPrefix = data.agent ? `[${data.agent}] ` : ""
-          const message = data.message || JSON.stringify(data)
-          setLogs((prev) => [...prev, `${logPrefix}${message}`])
+          if (data.status === "completed" || data.status === "error") {
+            setStatus(data.status)
+            clearInterval(intervalId)
+          }
 
-          if (data.type === "workflow_completed" || data.type === "workflow_error") {
-            setStatus(data.type === "workflow_completed" ? "completed" : "error")
-            eventSource.close()
+          if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight
           }
         }
       } catch (e) {
-        // If not JSON or error parsing, we might want to log it if it's a generic message,
-        // but since we share the stream, it's safer to ignore non-JSON to avoid noise from other streams
-      }
-
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+        console.error("Error fetching logs", e)
       }
     }
+
+    // Poll every 1 second
+    intervalId = setInterval(fetchLogs, 1000)
     
-    eventSource.addEventListener("end", () => {
-      setStatus("completed")
-      eventSource.close()
-    })
-
-    eventSource.onerror = () => {
-      // Don't mark as error if it just closed normally
-      if (status === "running") {
-         setLogs((prev) => [...prev, "Connection lost or closed."])
-      }
-      eventSource.close()
-    }
+    // Initial fetch immediately
+    fetchLogs()
 
     return () => {
-      eventSource.close()
+      clearInterval(intervalId)
     }
-  }, [executionId, session?.user?.organizationId])
+  }, [executionId])
 
   const handleStop = async () => {
     if (!executionId) return
