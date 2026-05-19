@@ -55,7 +55,7 @@ export function Sidebar() {
     <TooltipProvider>
       <aside
         className={cn(
-          "relative hidden h-screen border-r bg-card transition-all duration-300 md:flex flex-col",
+          "relative hidden h-screen border-r bg-background transition-all duration-300 md:flex flex-col",
           collapsed ? "w-[72px]" : "w-64"
         )}
       >

@@ -26,30 +26,44 @@ interface DashboardClientProps {
 
 export function DashboardClient({ userName, orgId }: DashboardClientProps) {
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Real‑time financial brain. Welcome back, {userName}.</p>
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground text-lg">Welcome back, {userName}.</p>
+        </div>
       </div>
 
-      <AnomalyCarousel />
-      
-      <KPIGrid />
+      {/* KPI row – white cards on light gray */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPIGrid />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
+      <div className="my-6 border-t" />
+
+      {/* Anomalies section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Active Alerts</h2>
+        <AnomalyCarousel />
+      </div>
+
+      <div className="my-6 border-t" />
+
+      {/* Main breakdown – elevated cards for primary data */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="card-elevated">
             <CardHeader>
-              <CardTitle>Cash Flow Forecast</CardTitle>
+              <CardTitle className="text-xl font-semibold">Cash Flow Forecast</CardTitle>
             </CardHeader>
             <CardContent>
               <CashFlowForecast />
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="card-default">
             <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
+              <CardTitle className="text-xl font-semibold">Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent>
               <TransactionFeed orgId={orgId} />
@@ -57,21 +71,21 @@ export function DashboardClient({ userName, orgId }: DashboardClientProps) {
           </Card>
         </div>
         
-        <div className="space-y-6">
+        <div className="space-y-8">
           <DashboardAlerts />
           
-          <Card>
+          <Card className="card-default">
             <CardHeader>
-              <CardTitle>Top Expenses</CardTitle>
+              <CardTitle className="text-xl font-semibold">Top Expenses</CardTitle>
             </CardHeader>
             <CardContent>
               <TransactionList orgId={orgId} />
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="card-default">
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
+              <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
               <ActivityFeed />
