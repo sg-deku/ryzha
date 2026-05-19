@@ -31,6 +31,9 @@ model Organization {
   anomalies ExpenseAnomaly[]
   webhooks  Webhook[]
   reportSchedules ReportSchedule[]
+  transactions    Transaction[]
+  contracts       Contract[]
+  financialSnapshot FinancialSnapshot?
 }
 
 model Invoice {
@@ -213,4 +216,60 @@ enum Plan {
 enum Role {
   ADMIN
   MEMBER
+}
+
+model Transaction {
+  id                     String      @id @default(cuid())
+  stripePaymentIntentId  String      @unique
+  amount                 Float
+  currency               String      @default("usd")
+  description            String?
+  customerEmail          String?
+  
+  // R2R & O&M fields
+  revenueRecognitionType String      @default("immediate") // immediate, deferred
+  recognizedRevenue      Float?      // amount recognized now
+  deferredRevenue        Float?      @default(0)
+  
+  // Auditor fields
+  auditStatus            String      @default("pending") // pending, verified, failed
+  auditHash              String?
+  
+  // FP&A fields
+  runwayMonths           Float?
+  zeroCashDate           DateTime?
+  percentAhead           Float?      // % ahead of financial plan
+  
+  // Workflow state
+  agentStatus            Json?        // stores logs per agent: { r2r: "done", om: "pending", ... }
+  agentLogs              Json        // array of { agent, message, timestamp }
+  workflowStatus         String      @default("pending") // pending, running, completed, error
+  
+  organizationId         String
+  organization           Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model Contract {
+  id                    String   @id @default(cuid())
+  stripePaymentIntentId String   @unique
+  customerEmail         String
+  amount                Float
+  status                String   @default("signed") // signed, pending
+  signedAt              DateTime @default(now())
+  organizationId        String
+  organization          Organization @relation(fields: [organizationId], references: [id])
+}
+
+model FinancialSnapshot {
+  id                    String   @id @default(cuid())
+  bankBalance           Float
+  averageMonthlyExpenses Float
+  runwayMonths          Float
+  zeroCashDate          DateTime
+  updatedAt             DateTime @updatedAt
+  organizationId        String   @unique
+  organization          Organization @relation(fields: [organizationId], references: [id])
 }
