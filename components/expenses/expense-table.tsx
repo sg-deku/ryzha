@@ -11,6 +11,7 @@ import {
   Trash2,
   ChevronDown
 } from "lucide-react"
+import Link from "next/link"
 import { 
   Table, 
   TableBody, 
@@ -166,7 +167,9 @@ export function ExpenseTable({ initialExpenses, selectedCategory, onSelectCatego
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View Details</DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/expenses/${expense.id}`}>View Details</Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem>Match with Receipt</DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                   </DropdownMenuContent>

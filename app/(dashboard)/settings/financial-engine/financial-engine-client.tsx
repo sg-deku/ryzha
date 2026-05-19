@@ -35,6 +35,7 @@ const financialSettingsSchema = z.object({
   aiProvider: z.string().nullable(),
   aiModel: z.string().min(1),
   aiApiKey: z.string().nullable(),
+  expenseCategories: z.any().optional(),
 })
 
 type FinancialSettingsValues = z.infer<typeof financialSettingsSchema>
@@ -42,6 +43,19 @@ type FinancialSettingsValues = z.infer<typeof financialSettingsSchema>
 export default function FinancialEngineClient({ initialData }: { initialData: any }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [categoriesStr, setCategoriesStr] = useState(() => {
+    try {
+      const cats = initialData?.expenseCategories;
+      if (Array.isArray(cats)) return cats.join(", ");
+      if (typeof cats === "string") {
+        const parsed = JSON.parse(cats);
+        if (Array.isArray(parsed)) return parsed.join(", ");
+      }
+      return "Software, Hardware, Office Supplies, Travel, Meals, Legal, Marketing, Other";
+    } catch {
+      return "Software, Hardware, Office Supplies, Travel, Meals, Legal, Marketing, Other";
+    }
+  });
 
   const form = useForm<FinancialSettingsValues>({
     resolver: zodResolver(financialSettingsSchema),
@@ -71,10 +85,15 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
   async function onSubmit(data: FinancialSettingsValues) {
     setIsLoading(true)
     try {
+      const parsedCategories = categoriesStr.split(",").map(c => c.trim()).filter(Boolean)
+      const payload = {
+        ...data,
+        expenseCategories: parsedCategories
+      }
       const response = await fetch("/api/settings/financial", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) throw new Error("Failed to update settings")
@@ -157,6 +176,17 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                       {...form.register("averageMonthlyExpenses", { valueAsNumber: true })} 
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="expenseCategories">Expense Categories (comma separated)</Label>
+                  <textarea 
+                    id="expenseCategories"
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={categoriesStr}
+                    onChange={(e) => setCategoriesStr(e.target.value)}
+                    placeholder="Software, Hardware, Travel, Meals..."
+                  />
+                  <p className="text-xs text-muted-foreground">Categories used by AI and for manual entry.</p>
                 </div>
               </CardContent>
             </Card>
