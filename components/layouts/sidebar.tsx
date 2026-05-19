@@ -16,6 +16,7 @@ import {
   Brain,
   Truck,
   ShoppingCart,
+  Workflow,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -181,6 +182,15 @@ export function Sidebar() {
               href="/settings/financial-engine"
               icon={Brain}
               label="Financial Engine"
+              collapsed={collapsed}
+            />
+          </Authorized>
+
+          <Authorized permission="agent:manage">
+            <SidebarItem
+              href="/workflow-studio"
+              icon={Workflow}
+              label="Workflow Studio"
               collapsed={collapsed}
             />
           </Authorized>
