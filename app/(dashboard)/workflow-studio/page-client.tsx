@@ -8,6 +8,7 @@ import { HistoryList } from "./components/history-list"
 
 export default function WorkflowStudioPage() {
   const [activeExecutionId, setActiveExecutionId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("trigger")
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -16,7 +17,7 @@ export default function WorkflowStudioPage() {
         <p className="text-muted-foreground">Test, debug, and manually trigger agent workflows</p>
       </div>
 
-      <Tabs defaultValue="trigger" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="trigger">Manual Trigger</TabsTrigger>
           <TabsTrigger value="graph">Agent Graph</TabsTrigger>
@@ -25,7 +26,10 @@ export default function WorkflowStudioPage() {
         </TabsList>
 
         <TabsContent value="trigger">
-          <ManualTriggerPanel onTrigger={(executionId) => setActiveExecutionId(executionId)} />
+          <ManualTriggerPanel onTrigger={(executionId) => {
+            setActiveExecutionId(executionId)
+            setActiveTab("live")
+          }} />
         </TabsContent>
 
         <TabsContent value="graph" className="h-[600px]">
@@ -37,7 +41,10 @@ export default function WorkflowStudioPage() {
         </TabsContent>
 
         <TabsContent value="history">
-          <HistoryList onSelect={(executionId) => setActiveExecutionId(executionId)} />
+          <HistoryList onSelect={(executionId) => {
+            setActiveExecutionId(executionId)
+            setActiveTab("live")
+          }} />
         </TabsContent>
       </Tabs>
     </div>
