@@ -17,6 +17,7 @@ import {
   Truck,
   ShoppingCart,
   Workflow,
+  Globe,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -138,18 +139,6 @@ export function Sidebar() {
             collapsed={collapsed}
           />
           
-          <div className="pt-4 pb-2 px-3">
-            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Settings</span>}
-            {collapsed && <div className="border-t mx-2" />}
-          </div>
-
-          <SidebarItem
-            href="/settings/account"
-            icon={UserCircle}
-            label="Account"
-            collapsed={collapsed}
-          />
-
           <Authorized permission="users:manage">
             <div className="pt-4 pb-2 px-3">
               {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin</span>}
@@ -184,6 +173,30 @@ export function Sidebar() {
               href="/settings/organization"
               icon={Building}
               label="Organization"
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              href="/settings/integrations"
+              icon={Globe}
+              label="Integrations"
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              href="/settings/p2p"
+              icon={ShoppingCart}
+              label="P2P Settings"
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              href="/settings/o2c"
+              icon={Truck}
+              label="O2C Settings"
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              href="/settings/reports"
+              icon={BarChart}
+              label="Report Settings"
               collapsed={collapsed}
             />
           </Authorized>
