@@ -99,24 +99,6 @@ export default function OrganizationSettingsPage() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-primary" />
-              <CardTitle>API & Webhooks</CardTitle>
-            </div>
-            <CardDescription>Connect external systems via API.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-center py-8">
-            <p className="text-sm text-muted-foreground">
-              Your API and Webhook settings have moved to the <strong>Integrations</strong> tab.
-            </p>
-            <Button variant="outline" asChild>
-              <a href="/settings/integrations">Go to Integrations</a>
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

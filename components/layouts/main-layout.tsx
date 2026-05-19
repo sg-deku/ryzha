@@ -79,9 +79,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <DropdownMenuItem asChild>
                   <Link href="/settings/account">Profile</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">Settings</Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-destructive">Log out</DropdownMenuItem>
               </DropdownMenuContent>
