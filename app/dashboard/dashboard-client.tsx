@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic"
 import { KPIGrid } from "@/components/dashboard/kpi-grid"
 import { ActivityFeed } from "@/components/dashboard/activity-feed"
+import { TransactionFeed } from "@/components/dashboard/transaction-feed"
+import { TransactionList } from "@/components/dashboard/transaction-list"
 import { DashboardAlerts } from "./dashboard-alerts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -19,9 +21,10 @@ const AnomalyCarousel = dynamic(() => import("@/components/dashboard/anomaly-car
 
 interface DashboardClientProps {
   userName: string | null | undefined
+  orgId: string | undefined
 }
 
-export function DashboardClient({ userName }: DashboardClientProps) {
+export function DashboardClient({ userName, orgId }: DashboardClientProps) {
   return (
     <div className="container mx-auto py-6 space-y-6 animate-fade-in">
       <Card>
@@ -44,9 +47,11 @@ export function DashboardClient({ userName }: DashboardClientProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               <CashFlowForecast />
+              <TransactionFeed orgId={orgId} />
             </div>
             <div className="space-y-6">
               <DashboardAlerts />
+              <TransactionList orgId={orgId} />
               <ActivityFeed />
             </div>
           </div>

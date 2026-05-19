@@ -17,5 +17,5 @@ export default async function DashboardPage() {
 
   if (!org?.onboardingCompleted) redirect("/onboarding")
 
-  return <DashboardClient userName={session.user?.name} />
+  return <DashboardClient userName={session.user?.name} orgId={session.user?.organizationId} />
 }
