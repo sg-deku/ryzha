@@ -7,7 +7,7 @@ async function main() {
     where: { slug: 'rhyza-hq' },
     update: {},
     create: {
-      name: 'Rhyza HQ',
+      name: 'Ryzha HQ',
       slug: 'rhyza-hq',
       plan: 'FREE',
     },

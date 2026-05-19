@@ -34,8 +34,8 @@ async function deliverWebhook(webhook: any, event: string, payload: any, retryCo
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Rhyza-Signature": signature,
-        "X-Rhyza-Event": event
+        "X-Ryzha-Signature": signature,
+        "X-Ryzha-Event": event
       },
       body
     })

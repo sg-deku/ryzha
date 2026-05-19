@@ -2,6 +2,11 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export const dynamic = 'force-dynamic'
 
@@ -24,39 +29,44 @@ export default function ReportSchedulePage() {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Automated Reports</h1>
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Recipients (comma separated)</label>
-          <input 
-            className="w-full p-2 border rounded" 
-            placeholder="ceo@company.com, cfo@company.com"
-            value={schedule.recipients}
-            onChange={e => setSchedule({...schedule, recipients: e.target.value})}
-          />
-        </div>
+    <div className="container mx-auto py-6 animate-fade-in">
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Automated Reports</CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">Configure automated financial summaries for your team.</p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="recipients">Recipients (comma separated)</Label>
+            <Input 
+              id="recipients"
+              placeholder="ceo@company.com, cfo@company.com"
+              value={schedule.recipients}
+              onChange={e => setSchedule({...schedule, recipients: e.target.value})}
+            />
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Frequency</label>
-          <select 
-            className="w-full p-2 border rounded"
-            value={schedule.frequency}
-            onChange={e => setSchedule({...schedule, frequency: e.target.value})}
-          >
-            <option value="WEEKLY">Weekly (Monday 9 AM)</option>
-            <option value="MONTHLY">Monthly (1st Day)</option>
-          </select>
-        </div>
+          <div className="space-y-2">
+            <Label>Frequency</Label>
+            <Select 
+              value={schedule.frequency}
+              onValueChange={value => setSchedule({...schedule, frequency: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="WEEKLY">Weekly (Monday 9 AM)</SelectItem>
+                <SelectItem value="MONTHLY">Monthly (1st Day)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <button 
-          onClick={saveSettings}
-          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-        >
-          Save Schedule
-        </button>
-      </div>
+          <Button onClick={saveSettings} className="w-full sm:w-auto">
+            Save Schedule
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }

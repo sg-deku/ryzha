@@ -16,7 +16,7 @@ export function CompanyStep({ data, updateData }: CompanyStepProps) {
           value={data.legalName || ""}
           onChange={(e) => updateData({ legalName: e.target.value })}
           className="w-full p-2 border rounded"
-          placeholder="Rhyza Corp"
+          placeholder="Ryzha Corp"
           required
         />
       </div>

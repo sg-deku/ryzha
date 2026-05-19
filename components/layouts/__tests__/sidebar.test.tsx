@@ -16,7 +16,7 @@ describe('Sidebar', () => {
 
   it('renders correctly', () => {
     render(<Sidebar />)
-    expect(screen.getByText('Rhyza')).toBeInTheDocument()
+    expect(screen.getByText('Ryzha')).toBeInTheDocument()
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
   })
 
@@ -31,14 +31,14 @@ describe('Sidebar', () => {
     const collapseButton = screen.getByRole('button', { name: /collapse/i })
     
     // Initially not collapsed
-    expect(screen.getByText('Rhyza')).toBeInTheDocument()
+    expect(screen.getByText('Ryzha')).toBeInTheDocument()
     
     // Click collapse
     fireEvent.click(collapseButton)
     
     // Check if collapsed (text should be hidden or removed from DOM depending on implementation)
-    // In our implementation, we use {!collapsed && <span>Rhyza</span>}
-    expect(screen.queryByText('Rhyza')).not.toBeInTheDocument()
+    // In our implementation, we use {!collapsed && <span>Ryzha</span>}
+    expect(screen.queryByText('Ryzha')).not.toBeInTheDocument()
     
     // Check localStorage
     expect(localStorage.getItem('sidebar-collapsed')).toBe('true')

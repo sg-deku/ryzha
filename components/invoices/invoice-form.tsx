@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AISuggestButton } from "./ai-suggest-button"
 
 interface LineItem {
   id: string
@@ -41,8 +42,6 @@ export function InvoiceForm() {
   const [total, setTotal] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isSuggesting, setIsSuggesting] = useState(false)
-  const [aiInput, setAiInput] = useState("")
 
   useEffect(() => {
     // Remove highlight from new items after a delay
@@ -206,43 +205,6 @@ export function InvoiceForm() {
     }
   }
 
-  const handleAISuggest = async () => {
-    if (!aiInput) return
-    setIsSuggesting(true)
-    try {
-      const res = await fetch("/api/invoices/ai-suggest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userInput: aiInput, clientEmail })
-      })
-      if (res.ok) {
-        const suggestions = await res.json()
-        const newItems = suggestions.map((s: any) => ({
-          id: Math.random().toString(36).substr(2, 9),
-          description: s.description,
-          quantity: s.suggestedQuantity,
-          unitPrice: s.suggestedUnitPrice,
-          taxRate: s.recommendedTaxRate,
-          amount: s.suggestedQuantity * s.suggestedUnitPrice,
-          isNew: true
-        }))
-        setLineItems(prev => {
-          // If first item is empty, replace it
-          if (prev.length === 1 && !prev[0].description && prev[0].amount === 0) {
-            return newItems
-          }
-          return [...prev, ...newItems]
-        })
-        setAiInput("")
-        toast.success("AI suggestions applied")
-      }
-    } catch (err) {
-      toast.error("AI suggestion failed")
-    } finally {
-      setIsSuggesting(false)
-    }
-  }
-
   return (
     <div className="container py-8 max-w-5xl">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -271,36 +233,28 @@ export function InvoiceForm() {
         </div>
       </div>
 
-      <Card className="mb-8 border-purple-100 bg-purple-50/50 dark:bg-purple-900/10 dark:border-purple-900/20">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h2 className="text-sm font-semibold text-purple-900 dark:text-purple-300">AI Invoice Assistant</h2>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input 
-              value={aiInput} 
-              onChange={e => setAiInput(e.target.value)} 
-              placeholder="e.g. 10 hours of consulting at $150/hr for March project" 
-              className="flex-1 bg-background"
-              onKeyDown={(e) => e.key === "Enter" && handleAISuggest()}
-            />
-            <ButtonWithLoading 
-              onClick={handleAISuggest}
-              isLoading={isSuggesting}
-              loadingText="Thinking..."
-              disabled={!aiInput}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              Suggest Items
-            </ButtonWithLoading>
-          </div>
-        </CardContent>
-      </Card>
+      <AISuggestButton 
+        onSuggestions={(suggestions) => {
+          const newItems = suggestions.map((s: any) => ({
+            id: Math.random().toString(36).substr(2, 9),
+            description: s.description,
+            quantity: s.suggestedQuantity,
+            unitPrice: s.suggestedUnitPrice,
+            taxRate: s.recommendedTaxRate,
+            amount: s.suggestedQuantity * s.suggestedUnitPrice,
+            isNew: true
+          }))
+          setLineItems(prev => {
+            if (prev.length === 1 && !prev[0].description && prev[0].amount === 0) {
+              return newItems
+            }
+            return [...prev, ...newItems]
+          })
+        }}
+        clientEmail={clientEmail}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 mt-8">
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-2">
