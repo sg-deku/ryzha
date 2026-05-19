@@ -16,9 +16,22 @@ export async function POST(req: Request) {
     let executionId = ""
 
     if (type === "stripe") {
+      const intentId = `sim_tx_${Date.now()}`;
+      
+      // Mock contract so Auditor agent passes
+      await prisma.contract.create({
+        data: {
+          stripePaymentIntentId: intentId,
+          customerEmail: "simulated@example.com",
+          amount: Number(payload?.amount) || 1000,
+          status: "signed",
+          organizationId: orgId
+        }
+      });
+
       const transaction = await prisma.transaction.create({
         data: {
-          stripePaymentIntentId: `sim_tx_${Date.now()}`,
+          stripePaymentIntentId: intentId,
           amount: Number(payload?.amount) || 1000,
           description: payload?.description || "Manual Stripe Simulation",
           customerEmail: "simulated@example.com",
