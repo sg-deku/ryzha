@@ -58,15 +58,9 @@ export function DashboardHeader() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/settings/account" className="flex w-full items-center">
+              <Link href="/profile" className="flex w-full items-center">
                 <User className="mr-2 h-4 w-4" />
-                <span>My Account</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/settings/organization" className="flex w-full items-center">
-                <Building className="mr-2 h-4 w-4" />
-                <span>Organization Settings</span>
+                <span>Your Profile</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
