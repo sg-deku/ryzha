@@ -35,6 +35,8 @@ const financialSettingsSchema = z.object({
   aiProvider: z.string().nullable(),
   aiModel: z.string().min(1),
   aiApiKey: z.string().nullable(),
+  embeddingProvider: z.string().nullable(),
+  embeddingModel: z.string().nullable(),
   expenseCategories: z.any().optional(),
 })
 
@@ -79,6 +81,8 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
       aiProvider: "openai",
       aiModel: "gpt-4o-mini",
       aiApiKey: "",
+      embeddingProvider: "openai",
+      embeddingModel: "text-embedding-3-small",
     },
   })
 
@@ -214,6 +218,8 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                       <SelectItem value="openai">OpenAI</SelectItem>
                       <SelectItem value="anthropic">Anthropic</SelectItem>
                       <SelectItem value="gemini">Google Gemini</SelectItem>
+                      <SelectItem value="groq">Groq (Llama 3)</SelectItem>
+                      <SelectItem value="ollama">Ollama (Local)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -226,7 +232,7 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                     placeholder="e.g., gpt-4o, claude-3-5-sonnet-20240620, gemini-1.5-pro"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Specify the exact model string for the selected provider.
+                    Specify the exact model string for the selected provider. (e.g. <code>gpt-4o-mini</code> for OpenAI, <code>llama3-70b-8192</code> for Groq, or <code>llama3</code> for Ollama).
                   </p>
                 </div>
                 
@@ -238,6 +244,45 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                     {...form.register("aiApiKey")} 
                     placeholder="Enter your API key (leave blank to use system default)"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Not required for Ollama (local).
+                  </p>
+                </div>
+
+                <Separator />
+                
+                <h4 className="text-sm font-medium pt-2">Embeddings Configuration</h4>
+                <p className="text-sm text-muted-foreground">
+                  Used by agents for semantic search across documentation and contracts. 
+                  OpenAI provides robust embeddings, while Ollama allows for completely local, private vector searches.
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="embeddingProvider">Embedding Provider</Label>
+                  <Select 
+                    value={form.watch("embeddingProvider") || "openai"} 
+                    onValueChange={(val) => form.setValue("embeddingProvider", val, { shouldDirty: true })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an embedding provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="ollama">Ollama (Local)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="embeddingModel">Embedding Model</Label>
+                  <Input 
+                    id="embeddingModel" 
+                    {...form.register("embeddingModel")} 
+                    placeholder="e.g., text-embedding-3-small, nomic-embed-text"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Specify the embedding model. If using Ollama, ensure you have pulled it (e.g. <code>ollama pull nomic-embed-text</code>).
+                  </p>
                 </div>
               </CardContent>
             </Card>

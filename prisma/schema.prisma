@@ -201,6 +201,8 @@ model FinancialSettings {
   aiModel                      String   @default("gpt-4o-mini") // Can be configurable by user (e.g. gpt-4, claude-3-haiku)
   aiApiKey                     String?  // Optional user-provided API key for their preferred provider
   aiProvider                   String?  @default("openai")
+  embeddingProvider            String?  @default("openai")
+  embeddingModel               String?  @default("text-embedding-3-small")
   expenseCategories            Json?    @default("[\"Software\", \"Hardware\", \"Office Supplies\", \"Travel\", \"Meals\", \"Legal\", \"Marketing\", \"Other\"]")
   updatedAt                    DateTime @updatedAt
 

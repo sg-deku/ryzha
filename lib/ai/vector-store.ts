@@ -1,6 +1,6 @@
 import { PrismaVectorStore } from "@langchain/community/vectorstores/prisma"
 import { PrismaClient, Prisma } from "@prisma/client"
-import { embeddings } from "./embeddings"
+import { getEmbeddings } from "./embeddings"
 
 const prisma = new PrismaClient()
 
@@ -9,9 +9,10 @@ const prisma = new PrismaClient()
 // or assume the user will add it. For the purpose of this Epic, we'll provide 
 // the structure.
 
-export async function getVectorStore() {
+export async function getVectorStore(organizationId: string) {
   // In a real implementation, you'd define a model like 'DocumentSection' in schema.prisma
   // and use it here.
+  // const embeddings = await getEmbeddings(organizationId)
   return null
 }
 
