@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Trash2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -14,9 +15,21 @@ import { toast } from "sonner"
 export default function NewPurchaseOrder() {
   const router = useRouter()
   const [vendorId, setVendorId] = useState("")
+  const [vendors, setVendors] = useState<any[]>([])
+  const [poNumber, setPoNumber] = useState(`PO-${Date.now().toString().slice(-6)}`)
+  const [isLoading, setIsLoading] = useState(false)
   const [lineItems, setLineItems] = useState([
     { description: "", quantity: 1, unitPrice: 0 }
   ])
+
+  useEffect(() => {
+    fetch("/api/vendors")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setVendors(data)
+      })
+      .catch(err => console.error(err))
+  }, [])
 
   const addLineItem = () => {
     setLineItems([...lineItems, { description: "", quantity: 1, unitPrice: 0 }])
@@ -36,9 +49,24 @@ export default function NewPurchaseOrder() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock submit for now
-    toast.success("Purchase Order created successfully")
-    router.push("/purchases")
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/purchases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendorId, poNumber, lineItems })
+      })
+
+      if (!res.ok) throw new Error("Failed to create purchase order")
+
+      toast.success("Purchase Order created successfully")
+      router.push("/purchases")
+      router.refresh()
+    } catch (err) {
+      toast.error("Failed to create purchase order")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -61,11 +89,20 @@ export default function NewPurchaseOrder() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="vendor">Vendor</Label>
-                <Input placeholder="Search vendor..." value={vendorId} onChange={(e) => setVendorId(e.target.value)} />
+                <Select value={vendorId} onValueChange={setVendorId} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a vendor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vendors.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="poNumber">PO Number</Label>
-                <Input defaultValue={`PO-${Date.now().toString().slice(-6)}`} readOnly />
+                <Input value={poNumber} onChange={e => setPoNumber(e.target.value)} required />
               </div>
             </div>
           </CardContent>
@@ -97,47 +134,51 @@ export default function NewPurchaseOrder() {
                         value={item.description} 
                         onChange={(e) => updateLineItem(index, "description", e.target.value)}
                         placeholder="Item description"
+                        required
                       />
                     </TableCell>
                     <TableCell>
                       <Input 
-                        type="number" 
+                        type="number"
+                        min="1"
                         value={item.quantity} 
-                        onChange={(e) => updateLineItem(index, "quantity", parseFloat(e.target.value))}
+                        onChange={(e) => updateLineItem(index, "quantity", e.target.value)}
+                        required
                       />
                     </TableCell>
                     <TableCell>
                       <Input 
-                        type="number" 
+                        type="number"
+                        min="0"
+                        step="0.01"
                         value={item.unitPrice} 
-                        onChange={(e) => updateLineItem(index, "unitPrice", parseFloat(e.target.value))}
+                        onChange={(e) => updateLineItem(index, "unitPrice", e.target.value)}
+                        required
                       />
                     </TableCell>
-                    <TableCell className="align-middle font-medium">
+                    <TableCell className="font-medium">
                       ${(item.quantity * item.unitPrice).toFixed(2)}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => removeLineItem(index)} disabled={lineItems.length === 1}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                      <Button variant="ghost" size="icon" type="button" onClick={() => removeLineItem(index)} disabled={lineItems.length === 1}>
+                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            
-            <div className="mt-4 flex justify-end">
-              <div className="text-right space-y-1">
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-2xl font-bold">${total.toLocaleString()}</p>
+            <div className="flex justify-end pt-4">
+              <div className="text-xl font-bold">
+                Total: ${total.toFixed(2)}
               </div>
             </div>
           </CardContent>
         </Card>
 
         <div className="flex justify-end gap-4">
-          <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
-          <Button type="submit">Create Purchase Order</Button>
+          <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? "Creating..." : "Create Purchase Order"}</Button>
         </div>
       </form>
     </div>

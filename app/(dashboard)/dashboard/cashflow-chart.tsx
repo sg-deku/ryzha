@@ -73,12 +73,12 @@ export function CashFlowForecast() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 p-4 rounded-lg border border-primary/10">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-muted/30 p-4 rounded-lg border border-primary/10">
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-bold">AI Cash Flow Forecast (90 Days)</h2>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full lg:w-auto">
           <Input 
             placeholder="What if: Add new hire" 
             className="flex-1 sm:w-64 bg-background"

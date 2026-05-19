@@ -98,7 +98,7 @@ export function DashboardClient({ userName, orgId, pendingPurchases = 0, overdue
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="card-default">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold">Audit Details</CardTitle>
+            <CardTitle className="text-xl font-semibold">Expense Anomalies & Audit Alerts</CardTitle>
           </CardHeader>
           <CardContent>
             <DashboardAlerts />

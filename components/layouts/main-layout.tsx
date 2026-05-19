@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { CommandPalette } from "@/components/ui/command-palette"
 
 import Link from "next/link"
 
@@ -40,11 +41,15 @@ export function MainLayout({ children }: MainLayoutProps) {
           <div className="flex items-center gap-4 flex-1">
             <div className="relative w-full max-w-md hidden md:block">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="pl-9 bg-muted/40 border-none focus-visible:ring-1 focus-visible:ring-primary/20"
-              />
+              <div
+                onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+                className="flex items-center h-9 w-full pl-9 pr-3 rounded-md bg-muted/40 border border-transparent hover:bg-muted/60 hover:cursor-pointer focus-visible:ring-1 focus-visible:ring-primary/20 text-sm text-muted-foreground"
+              >
+                Search...
+                <kbd className="pointer-events-none absolute right-2 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -89,6 +94,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           {children}
         </main>
       </div>
+      <CommandPalette />
       <BottomNav />
     </div>
   )

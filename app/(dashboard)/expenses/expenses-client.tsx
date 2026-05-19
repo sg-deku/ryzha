@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { Upload, Brain, Sparkles, Filter, MoreHorizontal, Download } from "lucide-react"
@@ -36,16 +37,31 @@ export function ExpensesClient({ initialExpenses, chartData }: ExpensesClientPro
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const totalToProcess = initialExpenses.filter(e => e.status === 'PENDING').length
 
+  const router = useRouter()
+  
   const handleCategorizeAll = async () => {
     if (totalToProcess === 0) return
     
     setIsProcessing(true)
     setProcessedCount(0)
     
-    for (let i = 1; i <= totalToProcess; i++) {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      setProcessedCount(i)
+    const pendingExpenses = initialExpenses.filter(e => e.status === 'PENDING')
+    
+    for (let i = 0; i < pendingExpenses.length; i++) {
+      try {
+        await fetch("/api/expenses/ai-categorize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expenseId: pendingExpenses[i].id })
+        })
+      } catch (err) {
+        console.error("Failed to categorize", err)
+      }
+      setProcessedCount(i + 1)
     }
+    
+    setIsProcessing(false)
+    router.refresh()
   }
 
   return (

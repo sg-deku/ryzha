@@ -14,12 +14,30 @@ export default function NewVendor() {
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [taxId, setTaxId] = useState("")
+  const [paymentTerms, setPaymentTerms] = useState("NET30")
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock submit for now
-    toast.success("Vendor created successfully")
-    router.push("/vendors")
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/vendors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, taxId, paymentTerms })
+      })
+
+      if (!res.ok) throw new Error("Failed to create vendor")
+
+      toast.success("Vendor created successfully")
+      router.push("/vendors")
+      router.refresh()
+    } catch (err) {
+      toast.error("Failed to create vendor")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -45,14 +63,22 @@ export default function NewVendor() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Contact Email</Label>
-              <Input id="email" type="email" required placeholder="billing@acmecorp.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="email" type="email" placeholder="billing@acmecorp.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="taxId">Tax ID (Optional)</Label>
+              <Input id="taxId" placeholder="XX-XXXXXXX" value={taxId} onChange={(e) => setTaxId(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="paymentTerms">Payment Terms</Label>
+              <Input id="paymentTerms" placeholder="NET30" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} />
             </div>
           </CardContent>
         </Card>
 
         <div className="flex justify-end gap-4">
-          <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
-          <Button type="submit">Create Vendor</Button>
+          <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? "Creating..." : "Create Vendor"}</Button>
         </div>
       </form>
     </div>
