@@ -24,7 +24,7 @@ model Organization {
   currency            String   @default("USD")
   onboardingCompleted Boolean  @default(false)
 
-  users    User[]
+  users    UserOrganization[]
   taxRules TaxRule[]
   expenses Expense[]
   invoices Invoice[]
@@ -33,6 +33,7 @@ model Organization {
   reportSchedules ReportSchedule[]
   transactions    Transaction[]
   contracts       Contract[]
+  roles           Role[]
   financialSnapshot FinancialSnapshot?
 }
 
@@ -126,16 +127,62 @@ enum ExpenseStatus {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  name           String
-  organizationId String
-  role           Role     @default(MEMBER)
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String?
+  name              String
+  status            UserStatus @default(ACTIVE)
+  resetToken        String?   @unique
+  resetTokenExpiry  DateTime?
   reportPreferences Json?   // { receiveWeekly: boolean, reportTypes: string[] }
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
+  organizations UserOrganization[]
+}
+
+model UserOrganization {
+  userId         String
+  organizationId String
+  roleId         String
+  user           User         @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  role           Role         @relation(fields: [roleId], references: [id])
+
+  @@id([userId, organizationId])
+}
+
+model Role {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  isSystem       Boolean  @default(false)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  permissions    RolePermission[]
+  userOrgs       UserOrganization[]
+}
+
+model Permission {
+  id             String   @id @default(cuid())
+  name           String   @unique // e.g. "users:manage"
+  description    String?
+  roles          RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
 }
 
 model TaxRule {
@@ -211,11 +258,6 @@ enum Plan {
   FREE
   PRO
   SCALE
-}
-
-enum Role {
-  ADMIN
-  MEMBER
 }
 
 model Transaction {

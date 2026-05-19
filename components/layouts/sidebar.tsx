@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import {
-  Home,
   FileText,
   Receipt,
   BarChart,
@@ -10,15 +9,20 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
+  Users,
+  ShieldAlert,
+  UserCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SidebarItem } from "./sidebar-item"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { Authorized } from "@/components/auth/authorized"
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = React.useState(false)
   const [mounted, setMounted] = React.useState(false)
+  const [settingsOpen, setSettingsOpen] = React.useState(false)
 
   React.useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed")
@@ -33,17 +37,6 @@ export function Sidebar() {
     setCollapsed(newState)
     localStorage.setItem("sidebar-collapsed", JSON.stringify(newState))
   }
-
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Toggle sidebar with [ key (common shortcut)
-      if (e.key === '[' && (e.metaKey || e.ctrlKey)) {
-        toggleCollapse()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [collapsed])
 
   if (!mounted) return null
 
@@ -64,7 +57,7 @@ export function Sidebar() {
           </div>
         </div>
 
-        <nav className="flex-1 space-y-1 p-2">
+        <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
           <SidebarItem
             href="/dashboard"
             icon={LayoutDashboard}
@@ -89,12 +82,36 @@ export function Sidebar() {
             label="Reports"
             collapsed={collapsed}
           />
+          
+          <div className="pt-4 pb-2 px-3">
+            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Settings</span>}
+            {collapsed && <div className="border-t mx-2" />}
+          </div>
+
           <SidebarItem
-            href="/settings"
-            icon={Settings}
-            label="Settings"
+            href="/settings/account"
+            icon={UserCircle}
+            label="Account"
             collapsed={collapsed}
           />
+
+          <Authorized permission="users:manage">
+            <SidebarItem
+              href="/settings/users"
+              icon={Users}
+              label="Users"
+              collapsed={collapsed}
+            />
+          </Authorized>
+
+          <Authorized permission="roles:manage">
+            <SidebarItem
+              href="/settings/roles"
+              icon={ShieldAlert}
+              label="Roles"
+              collapsed={collapsed}
+            />
+          </Authorized>
         </nav>
 
         <div className="border-t p-2">
