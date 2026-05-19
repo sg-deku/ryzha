@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   return NextResponse.json([
     {
@@ -25,6 +27,24 @@ export async function GET() {
       value: "$3,120",
       change: "+1.2%",
       data: [500, 1000, 1200, 1800, 2200, 2800, 3120]
+    },
+    {
+      title: "Runway",
+      value: "14.2 mo",
+      change: "+0.5 mo",
+      data: [12.1, 12.5, 12.8, 13.0, 13.5, 13.8, 14.2]
+    },
+    {
+      title: "Burn Rate",
+      value: "$3,180/mo",
+      change: "-5.4%",
+      data: [3500, 3450, 3400, 3350, 3300, 3200, 3180]
+    },
+    {
+      title: "Churn Rate",
+      value: "1.2%",
+      change: "-0.2%",
+      data: [2.1, 1.9, 1.8, 1.6, 1.5, 1.4, 1.2]
     }
   ])
 }

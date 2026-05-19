@@ -6,6 +6,8 @@ import { renderToBuffer } from "@react-pdf/renderer"
 import { TaxReportPDF } from "@/lib/pdf/tax-report-pdf"
 import React from 'react'
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return new Response("Unauthorized", { status: 401 })

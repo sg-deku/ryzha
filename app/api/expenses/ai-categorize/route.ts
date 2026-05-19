@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import { categorizeExpense } from "@/lib/ai/expense-categorizer"
 import { NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {

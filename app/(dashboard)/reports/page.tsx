@@ -1,10 +1,12 @@
+export const dynamic = "force-dynamic"
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { FileText, PieChart, TrendingUp, Landmark, ArrowRight } from "lucide-react"
 
 export default function ReportsPage() {
-  const reports = [
+  const reports: any[] = [
     {
       title: "Tax Report",
       description: "Detailed breakdown of sales tax collected and deductible expenses.",
@@ -16,29 +18,26 @@ export default function ReportsPage() {
     {
       title: "Cash Flow",
       description: "Analyze your income and expenses over time to understand liquidity.",
-      href: "#",
+      href: "/reports/cash-flow",
       icon: TrendingUp,
       color: "text-green-600",
       bgColor: "bg-green-100",
-      status: "Coming Soon"
     },
     {
       title: "Expense Categories",
       description: "Distribution of spending across different business categories.",
-      href: "#",
+      href: "/reports/expense-categories",
       icon: PieChart,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
-      status: "Coming Soon"
     },
     {
       title: "Financial Digest",
       description: "Monthly summary of organization-wide financial performance.",
-      href: "#",
+      href: "/reports/financial-digest",
       icon: FileText,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
-      status: "Coming Soon"
     }
   ]
 

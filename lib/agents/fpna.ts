@@ -1,38 +1,47 @@
 import { prisma } from "@/lib/prisma"
+import { getLLM } from "@/lib/ai/llm"
 
 export async function runFPAgent(transactionId: string) {
-  const transaction = await prisma.transaction.findUnique({
+  const tx = await prisma.transaction.findUnique({
     where: { id: transactionId },
-    include: { organization: true }
+    include: { 
+      organization: { 
+        include: { financialSettings: true } 
+      } 
+    }
   })
-  if (!transaction) return null
+  if (!tx) return null
 
-  // Calculate bank balance: sum of all paid invoices + all transactions - expenses
+  const settings = tx.organization.financialSettings
+  const baseBankBalance = settings?.bankBalance || 0
+  const targetMonthlyRevenue = settings?.targetMonthlyRevenue || 10000
+
+  // Calculate real-time bank balance: base + sum of all paid invoices + all transactions - expenses
   const [invoicesTotal, expensesTotal, transactionsTotal] = await Promise.all([
     prisma.invoice.aggregate({ 
-      where: { organizationId: transaction.organizationId, status: "PAID" }, 
+      where: { organizationId: tx.organizationId, status: "PAID" }, 
       _sum: { total: true } 
     }),
     prisma.expense.aggregate({ 
-      where: { organizationId: transaction.organizationId }, 
+      where: { organizationId: tx.organizationId }, 
       _sum: { amount: true } 
     }),
     prisma.transaction.aggregate({ 
-      where: { organizationId: transaction.organizationId }, 
+      where: { organizationId: tx.organizationId }, 
       _sum: { amount: true } 
     })
   ])
 
-  const totalRevenue = (invoicesTotal._sum.total || 0) + (transactionsTotal._sum.amount || 0)
-  const totalExpenses = expensesTotal._sum.amount || 0
-  const bankBalance = totalRevenue - totalExpenses
+  const currentRevenue = (invoicesTotal._sum.total || 0) + (transactionsTotal._sum.amount || 0)
+  const currentExpenses = expensesTotal._sum.amount || 0
+  const bankBalance = baseBankBalance + currentRevenue - currentExpenses
 
   // Average monthly expenses over last 3 months
   const threeMonthsAgo = new Date()
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
   const recentExpenses = await prisma.expense.aggregate({
     where: { 
-      organizationId: transaction.organizationId, 
+      organizationId: tx.organizationId, 
       date: { gte: threeMonthsAgo } 
     },
     _sum: { amount: true }
@@ -43,10 +52,49 @@ export async function runFPAgent(transactionId: string) {
   const zeroCashDate = new Date()
   zeroCashDate.setDate(zeroCashDate.getDate() + Math.round(runwayMonths * 30))
 
-  // Percent ahead of plan (mock plan: user can set monthly target; default $10k)
-  const targetMonthlyRevenue = 10000
+  // Percent ahead of plan
   const actualMonthlyRevenue = (transactionsTotal._sum.amount || 0) / 3 // crude average
   const percentAhead = ((actualMonthlyRevenue - targetMonthlyRevenue) / targetMonthlyRevenue) * 100
+
+  let logMessage = `FP&A: Runway recalculated: ${runwayMonths.toFixed(1)} months. Zero cash date: ${zeroCashDate.toLocaleDateString()}. ${percentAhead > 0 ? `+${percentAhead.toFixed(0)}%` : `${percentAhead.toFixed(0)}%`} ahead of plan.`
+  let aiNarrative = ""
+
+  // Upgrade with AI Narrative & Scenario Analysis
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const model = await getLLM(tx.organizationId, {
+        modelName: "gpt-4o-mini",
+        temperature: 0.7,
+      })
+
+      const response = await model.invoke([
+        {
+          role: "system",
+          content: `You are a strategic CFO (FP&A Agent). Analyze the company's financial health.
+          Runway: ${runwayMonths.toFixed(1)} months
+          Zero Cash Date: ${zeroCashDate.toLocaleDateString()}
+          Monthly Burn: $${avgMonthlyExpenses.toFixed(2)}
+          Revenue vs Plan: ${percentAhead.toFixed(0)}%
+          
+          Respond with JSON: { "narrative": string, "scenarios": { "optimistic": string, "pessimistic": string } }`
+        },
+        {
+          role: "user",
+          content: `Current transaction: ${tx.description} for $${tx.amount}. Give me a short narrative summary.`
+        }
+      ])
+
+      try {
+        const result = JSON.parse(response.content as string)
+        aiNarrative = result.narrative
+        logMessage = `FP&A: ${aiNarrative}`
+      } catch (e) {
+        console.error("FP&A AI narrative failed", e)
+      }
+    } catch (error) {
+      console.error("FP&A AI failed", error)
+    }
+  }
 
   const updated = await prisma.transaction.update({
     where: { id: transactionId },
@@ -57,8 +105,8 @@ export async function runFPAgent(transactionId: string) {
       agentLogs: {
         push: {
           agent: "FP&A",
-          message: `Runway recalculated: ${runwayMonths.toFixed(1)} months. Zero cash date: ${zeroCashDate.toLocaleDateString()}. ${percentAhead > 0 ? `+${percentAhead.toFixed(0)}%` : `${percentAhead.toFixed(0)}%`} ahead of plan.`,
-          timestamp: new Date()
+          message: logMessage,
+          timestamp: new Date().toISOString()
         }
       }
     }
@@ -66,7 +114,7 @@ export async function runFPAgent(transactionId: string) {
 
   // Update global financial snapshot
   await prisma.financialSnapshot.upsert({
-    where: { organizationId: transaction.organizationId },
+    where: { organizationId: tx.organizationId },
     update: { 
       bankBalance, 
       averageMonthlyExpenses: avgMonthlyExpenses, 
@@ -74,7 +122,7 @@ export async function runFPAgent(transactionId: string) {
       zeroCashDate 
     },
     create: { 
-      organizationId: transaction.organizationId, 
+      organizationId: tx.organizationId, 
       bankBalance, 
       averageMonthlyExpenses: avgMonthlyExpenses, 
       runwayMonths, 

@@ -23,7 +23,7 @@ export function KPICard({ title, value, change, data, index }: KPICardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.4 }}
     >
-      <Card>
+      <Card className="card-default">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         </CardHeader>

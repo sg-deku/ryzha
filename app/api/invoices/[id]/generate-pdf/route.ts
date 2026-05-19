@@ -8,6 +8,8 @@ import QRCode from "qrcode"
 import { NextResponse } from "next/server"
 import React from 'react'
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }

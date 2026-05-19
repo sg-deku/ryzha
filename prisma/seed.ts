@@ -11,7 +11,9 @@ async function main() {
     "invoices:manage",
     "expenses:manage",
     "reports:view",
-    "org:manage"
+    "org:manage",
+    "financial:manage",
+    "agent:manage"
   ]
 
   for (const pName of permissions) {

@@ -13,6 +13,11 @@ import {
   Shield,
   UserCircle,
   Building,
+  Brain,
+  Truck,
+  ShoppingCart,
+  Workflow,
+  Globe,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -67,6 +72,12 @@ export function Sidebar() {
             label="Dashboard"
             collapsed={collapsed}
           />
+          
+          <div className="pt-4 pb-2 px-3">
+            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Financials</span>}
+            {collapsed && <div className="border-t mx-2" />}
+          </div>
+
           <SidebarItem
             href="/invoices"
             icon={FileText}
@@ -85,33 +96,65 @@ export function Sidebar() {
             label="Reports"
             collapsed={collapsed}
           />
-          
+
           <div className="pt-4 pb-2 px-3">
-            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Settings</span>}
+            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Procure-to-Pay</span>}
             {collapsed && <div className="border-t mx-2" />}
           </div>
 
           <SidebarItem
-            href="/settings/account"
-            icon={UserCircle}
-            label="Account"
+            href="/vendors"
+            icon={Users}
+            label="Vendors"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/purchases"
+            icon={ShoppingCart}
+            label="Purchase Orders"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/vendor-invoices"
+            icon={FileText}
+            label="Vendor Invoices"
             collapsed={collapsed}
           />
 
+          <div className="pt-4 pb-2 px-3">
+            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order-to-Cash</span>}
+            {collapsed && <div className="border-t mx-2" />}
+          </div>
+
+          <SidebarItem
+            href="/customers"
+            icon={UserCircle}
+            label="Customers"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/sales-orders"
+            icon={Truck}
+            label="Sales Orders"
+            collapsed={collapsed}
+          />
+          
           <Authorized permission="users:manage">
+            <div className="pt-4 pb-2 px-3">
+              {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin</span>}
+              {collapsed && <div className="border-t mx-2" />}
+            </div>
+            
             <SidebarItem
               href="/settings/users"
               icon={Users}
-              label="Users"
+              label="User Management"
               collapsed={collapsed}
             />
-          </Authorized>
-
-          <Authorized permission="roles:manage">
             <SidebarItem
-              href="/settings/roles"
-              icon={Shield}
-              label="Roles"
+              href="/workflow-studio"
+              icon={Workflow}
+              label="Workflow Studio"
               collapsed={collapsed}
             />
           </Authorized>
@@ -121,6 +164,33 @@ export function Sidebar() {
               href="/settings/organization"
               icon={Building}
               label="Organization"
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              href="/settings/financial-engine"
+              icon={Brain}
+              label="Financial Engine"
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              href="/settings/integrations"
+              icon={Globe}
+              label="Integrations"
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              href="/settings/reports"
+              icon={BarChart}
+              label="Report Settings"
+              collapsed={collapsed}
+            />
+          </Authorized>
+
+          <Authorized permission="financial:manage">
+            <SidebarItem
+              href="/settings/financial-engine"
+              icon={Brain}
+              label="Financial Engine"
               collapsed={collapsed}
             />
           </Authorized>

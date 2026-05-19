@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import { triggerWebhook } from "@/lib/webhook-delivery"
 import { NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic";
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }

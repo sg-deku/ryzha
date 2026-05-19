@@ -35,6 +35,178 @@ model Organization {
   contracts       Contract[]
   roles           Role[]
   financialSnapshot FinancialSnapshot?
+  financialSettings FinancialSettings?
+  notifications    Notification[]
+  
+  // P2P Models
+  vendors          Vendor[]
+  purchaseOrders   PurchaseOrder[]
+  vendorInvoices   VendorInvoice[]
+  p2pSettings      P2PSettings?
+  
+  // O2C Models
+  customers        Customer[]
+  salesOrders      SalesOrder[]
+  o2cSettings      O2CSettings?
+}
+
+model P2PSettings {
+  id               String   @id @default(cuid())
+  organizationId   String   @unique
+  autoApproveLimit Float    @default(500)
+  requireThreeWayMatch Boolean @default(true)
+  earlyPaymentDiscount Boolean @default(true)
+  organization     Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Vendor {
+  id               String   @id @default(cuid())
+  name             String
+  email            String?
+  taxId            String?
+  address          Json?
+  paymentTerms     String?  @default("NET30")
+  status           String   @default("ACTIVE")
+  organizationId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  purchaseOrders   PurchaseOrder[]
+  invoices         VendorInvoice[]
+}
+
+model PurchaseOrder {
+  id               String   @id @default(cuid())
+  poNumber         String   @unique
+  vendorId         String
+  status           String   @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, ORDERED, RECEIVED, CLOSED
+  totalAmount      Float
+  organizationId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  vendor           Vendor   @relation(fields: [vendorId], references: [id])
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  lineItems        PurchaseOrderLine[]
+  vendorInvoices   VendorInvoice[]
+}
+
+model PurchaseOrderLine {
+  id               String   @id @default(cuid())
+  description      String
+  quantity         Float
+  unitPrice        Float
+  amount           Float
+  purchaseOrderId  String
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+}
+
+model VendorInvoice {
+  id               String   @id @default(cuid())
+  invoiceNumber    String
+  vendorId         String
+  purchaseOrderId  String?
+  status           String   @default("RECEIVED") // RECEIVED, MATCHED, APPROVED, PAID, DISPUTED
+  amount           Float
+  dueDate          DateTime
+  organizationId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  vendor           Vendor   @relation(fields: [vendorId], references: [id])
+  purchaseOrder    PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  lineItems        VendorInvoiceLine[]
+}
+
+model VendorInvoiceLine {
+  id               String   @id @default(cuid())
+  description      String
+  quantity         Float
+  unitPrice        Float
+  amount           Float
+  vendorInvoiceId  String
+  vendorInvoice    VendorInvoice @relation(fields: [vendorInvoiceId], references: [id])
+}
+
+model O2CSettings {
+  id               String   @id @default(cuid())
+  organizationId   String   @unique
+  creditLimitDefault Float  @default(5000)
+  autoDunning      Boolean  @default(true)
+  organization     Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Customer {
+  id               String   @id @default(cuid())
+  name             String
+  email            String?
+  taxId            String?
+  address          Json?
+  creditLimit      Float    @default(5000)
+  status           String   @default("ACTIVE")
+  organizationId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  salesOrders      SalesOrder[]
+}
+
+model SalesOrder {
+  id               String   @id @default(cuid())
+  orderNumber      String   @unique
+  customerId       String
+  status           String   @default("DRAFT") // DRAFT, APPROVED, INVOICED, PAID, SHIPPED
+  totalAmount      Float
+  organizationId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  customer         Customer @relation(fields: [customerId], references: [id])
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  lineItems        SalesOrderLine[]
+}
+
+model SalesOrderLine {
+  id               String   @id @default(cuid())
+  description      String
+  quantity         Float
+  unitPrice        Float
+  amount           Float
+  salesOrderId     String
+  salesOrder       SalesOrder @relation(fields: [salesOrderId], references: [id])
+}
+
+model FinancialSettings {
+  id                           String   @id @default(cuid())
+  organizationId               String   @unique
+  baseCurrency                 String   @default("USD")
+  fiscalYearStart              String   @default("January")
+  bankBalance                  Float    @default(0)
+  averageMonthlyExpenses       Float?
+  deferredRevenueRules         Json     // ["annual", "yearly", "subscription"]
+  deferralPeriodMonths         Int      @default(12)
+  contractVerificationSource   String   @default("manual")
+  requireAuditSeal             Boolean  @default(true)
+  autoRejectUnverified         Boolean  @default(false)
+  targetMonthlyRevenue         Float    @default(10000)
+  lowRunwayAlertThreshold      Int      @default(3)
+  enableVoiceSummary           Boolean  @default(true)
+  elevenLabsVoiceId            String   @default("21m00Tcm4TlvDq8ikWAM")
+  voiceScriptTemplate          String   @default("Karina, a {{amount}} credit has been reconciled under ASC 606. This improves our net income for the quarter and extends our cash runway by {{runwayDays}} days, moving our 'Zero Cash Date' to {{zeroCashDate}}. We are currently {{percentAhead}}% ahead of our financial plan.")
+  enableSMS                    Boolean  @default(false)
+  smsRecipientNumber           String?
+  aiModel                      String   @default("gpt-4o-mini") // Can be configurable by user (e.g. gpt-4, claude-3-haiku)
+  aiApiKey                     String?  // Optional user-provided API key for their preferred provider
+  aiProvider                   String?  @default("openai")
+  embeddingProvider            String?  @default("openai")
+  embeddingModel               String?  @default("text-embedding-3-small")
+  expenseCategories            Json?    @default("[\"Software\", \"Hardware\", \"Office Supplies\", \"Travel\", \"Meals\", \"Legal\", \"Marketing\", \"Other\"]")
+  updatedAt                    DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
 }
 
 model Invoice {
@@ -124,6 +296,7 @@ enum ExpenseStatus {
   PENDING
   CATEGORIZED
   REVIEWED
+  PAID
 }
 
 model User {
@@ -233,15 +406,30 @@ model WebhookLog {
 
 model ReportSchedule {
   id             String      @id @default(cuid())
+  organizationId String
   type           ReportType
   frequency      Frequency
   recipients     String[]    // Emails
   lastSent       DateTime?
-  organizationId String
+  nextRun        DateTime?
   createdAt      DateTime    @default(now())
 
   organization   Organization @relation(fields: [organizationId], references: [id])
 }
+
+model Notification {
+  id             String   @id @default(cuid())
+  type           String   // "INFO", "SUCCESS", "WARNING", "ERROR"
+  title          String
+  message        String
+  read           Boolean  @default(false)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
 
 enum ReportType {
   CASH_FLOW

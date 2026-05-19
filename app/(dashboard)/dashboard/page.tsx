@@ -17,5 +17,25 @@ export default async function DashboardPage() {
 
   if (!org?.onboardingCompleted) redirect("/onboarding")
 
-  return <DashboardClient userName={session.user?.name} orgId={session.user?.organizationId} />
+  const [pendingPurchases, overdueSales] = await Promise.all([
+    prisma.purchaseOrder.count({
+      where: { organizationId: session.user.organizationId, status: "PENDING_APPROVAL" }
+    }),
+    prisma.salesOrder.count({
+      where: { 
+        organizationId: session.user.organizationId, 
+        status: "INVOICED",
+        createdAt: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      }
+    })
+  ])
+
+  return (
+    <DashboardClient 
+      userName={session.user?.name} 
+      orgId={session.user?.organizationId}
+      pendingPurchases={pendingPurchases}
+      overdueSales={overdueSales}
+    />
+  )
 }
