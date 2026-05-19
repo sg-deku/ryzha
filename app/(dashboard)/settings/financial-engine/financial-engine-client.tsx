@@ -205,6 +205,14 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="rounded-md bg-muted/50 p-4 mb-4">
+                  <h4 className="text-sm font-semibold mb-2">Using Free Models (Llama 3)</h4>
+                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
+                    <li><strong>Groq:</strong> Select "Groq", model <code>llama3-70b-8192</code>. Fast cloud inference. Requires a free API key from Groq.</li>
+                    <li><strong>Ollama:</strong> Select "Ollama", model <code>llama3</code>. Runs 100% locally. Requires installing Ollama and running <code>ollama run llama3</code>. No API key needed.</li>
+                  </ul>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="aiProvider">AI Provider</Label>
                   <Select 
@@ -252,10 +260,15 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                 <Separator />
                 
                 <h4 className="text-sm font-medium pt-2">Embeddings Configuration</h4>
-                <p className="text-sm text-muted-foreground">
-                  Used by agents for semantic search across documentation and contracts. 
-                  OpenAI provides robust embeddings, while Ollama allows for completely local, private vector searches.
-                </p>
+                <div className="rounded-md bg-muted/50 p-4 mb-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Embeddings are used by agents for semantic search across your uploaded documents and contracts (vector search). 
+                  </p>
+                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
+                    <li><strong>OpenAI:</strong> Robust, cloud-based embeddings (e.g., <code>text-embedding-3-small</code>). Best accuracy, requires API key.</li>
+                    <li><strong>Ollama (Local):</strong> Free and completely private vector searches. Requires installing an embedding model like <code>nomic-embed-text</code> locally via <code>ollama pull nomic-embed-text</code>.</li>
+                  </ul>
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="embeddingProvider">Embedding Provider</Label>
