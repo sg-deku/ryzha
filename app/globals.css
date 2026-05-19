@@ -103,3 +103,77 @@
     }
   }
 }
+
+@layer base {
+  .theme-warm-earth {
+    --background: 40 43% 98%;
+    --foreground: 210 23% 9%;
+    --card: 40 43% 98%;
+    --card-foreground: 210 23% 9%;
+    --popover: 40 43% 98%;
+    --popover-foreground: 210 23% 9%;
+    --primary: 33 62% 60%;
+    --primary-foreground: 40 43% 98%;
+    --secondary: 210 23% 9%;
+    --secondary-foreground: 40 43% 98%;
+    --muted: 40 20% 90%;
+    --muted-foreground: 210 10% 40%;
+    --border: 210 23% 85%;
+    --input: 210 23% 85%;
+    --ring: 33 62% 60%;
+  }
+
+  .theme-new-authority {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 19 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 19 100% 50%;
+  }
+
+  .theme-deep-amethyst {
+    --background: 252 38% 8%;
+    --foreground: 254 55% 93%;
+    --card: 252 38% 8%;
+    --card-foreground: 254 55% 93%;
+    --popover: 252 38% 8%;
+    --popover-foreground: 254 55% 93%;
+    --primary: 330 100% 50%;
+    --primary-foreground: 254 55% 93%;
+    --secondary: 252 30% 15%;
+    --secondary-foreground: 254 55% 93%;
+    --muted: 252 30% 15%;
+    --muted-foreground: 254 30% 70%;
+    --border: 252 30% 20%;
+    --input: 252 30% 20%;
+    --ring: 330 100% 50%;
+  }
+
+  .theme-radioactive {
+    --background: 100 7% 92%;
+    --foreground: 208 19% 17%;
+    --card: 100 7% 92%;
+    --card-foreground: 208 19% 17%;
+    --popover: 100 7% 92%;
+    --popover-foreground: 208 19% 17%;
+    --primary: 72 100% 50%;
+    --primary-foreground: 208 19% 17%;
+    --secondary: 208 19% 17%;
+    --secondary-foreground: 100 7% 92%;
+    --muted: 100 10% 85%;
+    --muted-foreground: 208 10% 40%;
+    --border: 100 10% 80%;
+    --input: 100 10% 80%;
+    --ring: 72 100% 50%;
+  }
+}
