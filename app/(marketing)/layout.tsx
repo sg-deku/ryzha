@@ -1,0 +1,42 @@
+import { ThemeToggle } from "@/components/theme-toggle"
+import Link from "next/link"
+
+export default function MarketingLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container flex h-16 items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 font-bold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              R
+            </div>
+            <span className="text-xl">Ryzha</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Link 
+              href="/login"
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
+              Log in
+            </Link>
+          </div>
+        </div>
+      </header>
+      <main className="flex-1 flex flex-col bg-grid-pattern">
+        {children}
+      </main>
+      <footer className="border-t py-6 md:py-0">
+        <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Ryzha. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
+  )
+}

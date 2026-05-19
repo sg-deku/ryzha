@@ -8,12 +8,14 @@ declare module "next-auth" {
     user: {
       id: string
       organizationId: string
+      role: string
     } & DefaultSession["user"]
   }
 
   interface User {
     id: string
     organizationId: string
+    role: string
   }
 }
 
@@ -29,13 +31,18 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
-          include: { organization: true }
         })
         if (!user) return null
         // In a real scenario you'd have a hashed password field.
         // For now, accept any non‑empty password (MVP).
         if (credentials.password.length < 1) return null
-        return { id: user.id, email: user.email, name: user.name, organizationId: user.organizationId }
+        return { 
+          id: user.id, 
+          email: user.email, 
+          name: user.name, 
+          organizationId: user.organizationId,
+          role: user.role
+        }
       }
     })
   ],
@@ -43,14 +50,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.organizationId = (user as any).organizationId
+        token.organizationId = user.organizationId
+        token.role = user.role
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id as string
-        (session.user as any).organizationId = token.organizationId as string
+        session.user.id = token.id as string
+        session.user.organizationId = token.organizationId as string
+        session.user.role = token.role as string
       }
       return session
     }

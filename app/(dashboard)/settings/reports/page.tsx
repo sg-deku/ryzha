@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Save } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
@@ -18,22 +19,36 @@ export default function ReportSchedulePage() {
   })
 
   const saveSettings = async () => {
-    await fetch('/api/settings/reports', {
-      method: 'POST',
-      body: JSON.stringify({
-        ...schedule,
-        recipients: schedule.recipients.split(',').map(e => e.trim())
+    try {
+      const res = await fetch('/api/settings/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...schedule,
+          recipients: schedule.recipients.split(',').map(e => e.trim())
+        })
       })
-    })
-    toast.success('Settings saved')
+      if (res.ok) {
+        toast.success('Report schedule saved successfully')
+      } else {
+        toast.error('Failed to save settings')
+      }
+    } catch (error) {
+      toast.error('An error occurred while saving')
+    }
   }
 
   return (
-    <div className="container mx-auto py-6 animate-fade-in">
-      <Card className="max-w-2xl mx-auto">
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Report Settings</h1>
+        <p className="text-muted-foreground">Configure automated financial summaries for your team.</p>
+      </div>
+
+      <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Automated Reports</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">Configure automated financial summaries for your team.</p>
+          <CardTitle>Automated Reports</CardTitle>
+          <CardDescription>Configure how and when your team receives financial digests.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -63,6 +78,7 @@ export default function ReportSchedulePage() {
           </div>
 
           <Button onClick={saveSettings} className="w-full sm:w-auto">
+            <Save className="mr-2 h-4 w-4" />
             Save Schedule
           </Button>
         </CardContent>

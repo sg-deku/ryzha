@@ -15,8 +15,12 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SidebarItem } from "./sidebar-item"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { useSession } from "next-auth/react"
+import { User, Users, Shield, Building } from "lucide-react"
 
 export function Sidebar() {
+  const { data: session } = useSession()
   const [collapsed, setCollapsed] = React.useState(false)
   const [mounted, setMounted] = React.useState(false)
 
@@ -95,9 +99,43 @@ export function Sidebar() {
             label="Settings"
             collapsed={collapsed}
           />
+          <div className={cn("mt-2 space-y-1", !collapsed && "pl-4")}>
+            <SidebarItem
+              href="/settings/account"
+              icon={User}
+              label="My Account"
+              collapsed={collapsed}
+            />
+            {session?.user?.role === "ADMIN" && (
+              <>
+                <SidebarItem
+                  href="/settings/users"
+                  icon={Users}
+                  label="Users"
+                  collapsed={collapsed}
+                />
+                <SidebarItem
+                  href="/settings/roles"
+                  icon={Shield}
+                  label="Roles"
+                  collapsed={collapsed}
+                />
+                <SidebarItem
+                  href="/settings/organization"
+                  icon={Building}
+                  label="Organization"
+                  collapsed={collapsed}
+                />
+              </>
+            )}
+          </div>
         </nav>
 
-        <div className="border-t p-2">
+        <div className="border-t p-2 space-y-2">
+          <div className={cn("flex items-center", collapsed ? "justify-center" : "px-2 justify-between")}>
+            {!collapsed && <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Appearance</span>}
+            <ThemeToggle />
+          </div>
           <Button
             variant="ghost"
             size="icon"

@@ -17,8 +17,11 @@ export default async function OnboardingPage() {
   if (org?.onboardingCompleted) redirect("/dashboard")
   
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-8 text-center">Welcome to Ryzha</h1>
+    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight">Welcome to Ryzha</h1>
+        <p className="text-muted-foreground text-lg">Let's set up your organization's financial brain.</p>
+      </div>
       <OnboardingWizard />
     </div>
   )
