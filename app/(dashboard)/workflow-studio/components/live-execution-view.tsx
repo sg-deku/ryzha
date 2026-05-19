@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -7,20 +8,44 @@ import { Loader2, SquareSquare } from "lucide-react"
 import { toast } from "sonner"
 
 export function LiveExecutionView({ executionId }: { executionId: string | null }) {
+  const { data: session } = useSession()
   const [logs, setLogs] = useState<string[]>([])
   const [status, setStatus] = useState<"idle" | "running" | "completed" | "error">("idle")
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!executionId) return
+    const orgId = session?.user?.organizationId
+    if (!executionId || !orgId) return
 
     setLogs([`Connecting to execution stream for ${executionId}...`])
     setStatus("running")
 
-    const eventSource = new EventSource(`/api/webhooks/logs?transactionId=${executionId}`)
+    const eventSource = new EventSource(`/api/events?orgId=${orgId}`)
     
     eventSource.onmessage = (event) => {
-      setLogs((prev) => [...prev, event.data])
+      try {
+        const data = JSON.parse(event.data)
+        
+        // Match the event to the current execution ID
+        const matches = data.transactionId === executionId || 
+                        data.vendorInvoiceId === executionId || 
+                        data.salesOrderId === executionId
+
+        if (matches) {
+          const logPrefix = data.agent ? `[${data.agent}] ` : ""
+          const message = data.message || JSON.stringify(data)
+          setLogs((prev) => [...prev, `${logPrefix}${message}`])
+
+          if (data.type === "workflow_completed" || data.type === "workflow_error") {
+            setStatus(data.type === "workflow_completed" ? "completed" : "error")
+            eventSource.close()
+          }
+        }
+      } catch (e) {
+        // If not JSON or error parsing, we might want to log it if it's a generic message,
+        // but since we share the stream, it's safer to ignore non-JSON to avoid noise from other streams
+      }
+
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight
       }
@@ -42,7 +67,7 @@ export function LiveExecutionView({ executionId }: { executionId: string | null 
     return () => {
       eventSource.close()
     }
-  }, [executionId])
+  }, [executionId, session?.user?.organizationId])
 
   const handleStop = async () => {
     if (!executionId) return
