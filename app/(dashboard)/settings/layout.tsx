@@ -6,7 +6,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   const session = await getServerSession(authOptions)
   
   // Basic check for admin role
-  if (session?.user?.role !== 'ADMIN') {
+  if (!session?.user?.role || session.user.role.toUpperCase() !== 'ADMIN') {
     // Also allow access if they have specific permissions
     // In a real scenario you would check specific permissions like "org:manage"
     // Since we don't have the exact permissions hook here, checking role is standard
