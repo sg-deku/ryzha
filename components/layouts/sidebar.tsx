@@ -60,7 +60,7 @@ export function Sidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               R
             </div>
-            {!collapsed && <span className="text-xl">Rhyza</span>}
+            {!collapsed && <span className="text-xl">Ryzha</span>}
           </div>
         </div>
 

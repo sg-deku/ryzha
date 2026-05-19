@@ -18,7 +18,7 @@ export default async function OnboardingPage() {
   
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-8 text-center">Welcome to Rhyza</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">Welcome to Ryzha</h1>
       <OnboardingWizard />
     </div>
   )

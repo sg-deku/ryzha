@@ -42,7 +42,7 @@ export function OnboardingWizard() {
         body: JSON.stringify(formData)
       })
       if (res.ok) {
-        toast.success("Welcome to Rhyza!")
+        toast.success("Welcome to Ryzha!")
         router.push("/dashboard")
         router.refresh()
       } else {

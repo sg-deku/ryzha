@@ -23,7 +23,7 @@ export function LoginForm() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <form onSubmit={handleSubmit} className="space-y-4 w-96 p-8 border rounded">
-        <h1 className="text-2xl font-bold">Login to Rhyza</h1>
+        <h1 className="text-2xl font-bold">Login to Ryzha</h1>
         <input 
           type="email" 
           placeholder="Email" 
