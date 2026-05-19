@@ -3,6 +3,8 @@ import { authOptions } from "@/lib/auth"
 import { buildTaxReport } from "@/lib/tax/tax-report-builder"
 import { NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return new Response("Unauthorized", { status: 401 })
