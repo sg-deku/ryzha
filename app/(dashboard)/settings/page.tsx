@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Users, Shield, Building, Globe, Bell, CreditCard } from "lucide-react"
+import { User, Users, Shield, Building, Globe, Bell, CreditCard, Brain } from "lucide-react"
 import Link from "next/link"
 
 const SETTINGS_GROUPS = [
@@ -44,6 +44,12 @@ const SETTINGS_GROUPS = [
         description: "Define access control levels",
         icon: Shield,
         href: "/settings/roles",
+      },
+      {
+        title: "Financial Engine",
+        description: "AI agent behavior and revenue rules",
+        icon: Brain,
+        href: "/settings/financial-engine",
       },
       {
         title: "Billing",

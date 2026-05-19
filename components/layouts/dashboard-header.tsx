@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { User, LogOut, Building } from "lucide-react"
 import Link from "next/link"
 import { OrganizationSwitcher } from "@/components/dashboard/org-switcher"
+import { NotificationBell } from "@/components/dashboard/notification-bell"
 
 export function DashboardHeader() {
   const { data: session } = useSession()
@@ -35,6 +36,7 @@ export function DashboardHeader() {
       </div>
       
       <div className="flex items-center gap-4">
+        <NotificationBell />
         <ThemeToggle />
         
         <DropdownMenu>

@@ -3,6 +3,8 @@ import { runR2RAgent } from "./r2r"
 import { runOMAgent } from "./om"
 import { runAuditorAgent } from "./auditor"
 import { runFPAgent } from "./fpna"
+import { runMatchingAgent } from "./p2p/matching"
+import { runCollectionsAgent } from "./o2c/collections"
 import { sendVoiceSummary, sendSMSNotification } from "@/lib/notifications"
 import { publishEvent } from "@/lib/events"
 
@@ -94,5 +96,84 @@ export async function startAgentWorkflow(transactionId: string) {
       error: error instanceof Error ? error.message : "Unknown error",
       timestamp: new Date()
     })
+  }
+}
+
+export async function startP2PWorkflow(vendorInvoiceId: string) {
+  const invoice = await prisma.vendorInvoice.findUnique({
+    where: { id: vendorInvoiceId },
+    include: { organization: true }
+  })
+  if (!invoice) return
+
+  try {
+    const orgId = invoice.organizationId
+    
+    // Step 1: Matching
+    const matchingResult = await runMatchingAgent(vendorInvoiceId)
+    const updated = matchingResult?.updated || invoice
+    const logMessage = matchingResult?.logMessage || "Matching failed"
+    
+    // Step 2: If matched and approved, create Expense
+    if (updated.status === "MATCHED") {
+      await prisma.expense.create({
+        data: {
+          date: new Date(),
+          description: `Vendor Invoice: ${updated.invoiceNumber}`,
+          amount: updated.amount,
+          category: "Accounts Payable",
+          organizationId: orgId,
+          status: "REVIEWED"
+        }
+      })
+    }
+
+    await publishEvent(`org:${orgId}:events`, {
+      type: "p2p_workflow_log",
+      vendorInvoiceId,
+      message: logMessage,
+      timestamp: new Date()
+    })
+  } catch (error) {
+    console.error("P2P Workflow error:", error)
+  }
+}
+
+export async function startO2CWorkflow(salesOrderId: string) {
+  const order = await prisma.salesOrder.findUnique({
+    where: { id: salesOrderId },
+    include: { organization: true, customer: true }
+  })
+  if (!order) return
+
+  try {
+    const orgId = order.organizationId
+
+    // Step 1: Logic for O2C (e.g. invoicing, collections check)
+    if (order.status === "PAID") {
+      // Create a transaction to trigger the main agent workflow
+      const transaction = await prisma.transaction.create({
+        data: {
+          stripePaymentIntentId: `o2c-${order.orderNumber}-${Date.now()}`,
+          amount: order.totalAmount,
+          description: `Sales Order Payment: ${order.orderNumber} - ${order.customer.name}`,
+          customerEmail: order.customer.email,
+          organizationId: orgId,
+          agentLogs: []
+        }
+      })
+
+      // Start the main financial brain agents (R2R, O&M, Auditor, FP&A)
+      await startAgentWorkflow(transaction.id)
+    }
+
+    await publishEvent(`org:${orgId}:events`, {
+      type: "o2c_workflow_log",
+      salesOrderId,
+      message: `O2C: Processed order ${order.orderNumber}. Status: ${order.status}`,
+      timestamp: new Date()
+    })
+  } catch (error) {
+    console.error("O2C Workflow error:", error)
   }
 }

@@ -13,6 +13,9 @@ import {
   Shield,
   UserCircle,
   Building,
+  Brain,
+  Truck,
+  ShoppingCart,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -67,6 +70,12 @@ export function Sidebar() {
             label="Dashboard"
             collapsed={collapsed}
           />
+          
+          <div className="pt-4 pb-2 px-3">
+            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Financials</span>}
+            {collapsed && <div className="border-t mx-2" />}
+          </div>
+
           <SidebarItem
             href="/invoices"
             icon={FileText}
@@ -83,6 +92,48 @@ export function Sidebar() {
             href="/reports"
             icon={BarChart}
             label="Reports"
+            collapsed={collapsed}
+          />
+
+          <div className="pt-4 pb-2 px-3">
+            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Procure-to-Pay</span>}
+            {collapsed && <div className="border-t mx-2" />}
+          </div>
+
+          <SidebarItem
+            href="/vendors"
+            icon={Users}
+            label="Vendors"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/purchases"
+            icon={ShoppingCart}
+            label="Purchase Orders"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/vendor-invoices"
+            icon={FileText}
+            label="Vendor Invoices"
+            collapsed={collapsed}
+          />
+
+          <div className="pt-4 pb-2 px-3">
+            {!collapsed && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order-to-Cash</span>}
+            {collapsed && <div className="border-t mx-2" />}
+          </div>
+
+          <SidebarItem
+            href="/customers"
+            icon={UserCircle}
+            label="Customers"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/sales-orders"
+            icon={Truck}
+            label="Sales Orders"
             collapsed={collapsed}
           />
           
@@ -121,6 +172,15 @@ export function Sidebar() {
               href="/settings/organization"
               icon={Building}
               label="Organization"
+              collapsed={collapsed}
+            />
+          </Authorized>
+
+          <Authorized permission="financial:manage">
+            <SidebarItem
+              href="/settings/financial-engine"
+              icon={Brain}
+              label="Financial Engine"
               collapsed={collapsed}
             />
           </Authorized>

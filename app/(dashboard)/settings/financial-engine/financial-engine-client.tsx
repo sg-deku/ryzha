@@ -1,0 +1,309 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { toast } from "sonner"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const financialSettingsSchema = z.object({
+  baseCurrency: z.string().min(1),
+  fiscalYearStart: z.string().min(1),
+  bankBalance: z.number().min(0),
+  averageMonthlyExpenses: z.number().nullable(),
+  deferredRevenueRules: z.array(z.string()),
+  deferralPeriodMonths: z.number().min(1),
+  contractVerificationSource: z.string(),
+  requireAuditSeal: z.boolean(),
+  autoRejectUnverified: z.boolean(),
+  targetMonthlyRevenue: z.number().min(0),
+  lowRunwayAlertThreshold: z.number().min(1),
+  enableVoiceSummary: z.boolean(),
+  elevenLabsVoiceId: z.string(),
+  voiceScriptTemplate: z.string(),
+  enableSMS: z.boolean(),
+  smsRecipientNumber: z.string().nullable(),
+})
+
+type FinancialSettingsValues = z.infer<typeof financialSettingsSchema>
+
+export default function FinancialEngineClient({ initialData }: { initialData: any }) {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const form = useForm<FinancialSettingsValues>({
+    resolver: zodResolver(financialSettingsSchema),
+    defaultValues: initialData || {
+      baseCurrency: "USD",
+      fiscalYearStart: "January",
+      bankBalance: 0,
+      averageMonthlyExpenses: 0,
+      deferredRevenueRules: ["annual"],
+      deferralPeriodMonths: 12,
+      contractVerificationSource: "manual",
+      requireAuditSeal: true,
+      autoRejectUnverified: false,
+      targetMonthlyRevenue: 10000,
+      lowRunwayAlertThreshold: 3,
+      enableVoiceSummary: true,
+      elevenLabsVoiceId: "21m00Tcm4TlvDq8ikWAM",
+      voiceScriptTemplate: "Karina, a {{amount}} credit has been reconciled under ASC 606. This improves our net income for the quarter and extends our cash runway by {{runwayDays}} days, moving our 'Zero Cash Date' to {{zeroCashDate}}. We are currently {{percentAhead}}% ahead of our financial plan.",
+      enableSMS: false,
+      smsRecipientNumber: "",
+    },
+  })
+
+  async function onSubmit(data: FinancialSettingsValues) {
+    setIsLoading(true)
+    try {
+      const response = await fetch("/api/settings/financial", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) throw new Error("Failed to update settings")
+
+      toast.success("Financial engine settings updated successfully")
+      router.refresh()
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">Financial Engine Settings</h3>
+        <p className="text-sm text-muted-foreground">
+          Configure how the AI agents process and analyze your financial data.
+        </p>
+      </div>
+      <Separator />
+      
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="revenue">Revenue Rules</TabsTrigger>
+            <TabsTrigger value="audit">Audit Rules</TabsTrigger>
+            <TabsTrigger value="fpa">FP&A</TabsTrigger>
+            <TabsTrigger value="voice-sms">Voice & SMS</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="general" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>General Settings</CardTitle>
+                <CardDescription>Basic financial configuration for your organization.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="baseCurrency">Base Currency</Label>
+                    <Input {...form.register("baseCurrency")} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fiscalYearStart">Fiscal Year Start</Label>
+                    <Select 
+                      onValueChange={(value) => form.setValue("fiscalYearStart", value)}
+                      defaultValue={form.getValues("fiscalYearStart")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select month" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bankBalance">Current Bank Balance</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      {...form.register("bankBalance", { valueAsNumber: true })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="averageMonthlyExpenses">Avg. Monthly Expenses</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      {...form.register("averageMonthlyExpenses", { valueAsNumber: true })} 
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="revenue" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue Recognition Rules</CardTitle>
+                <CardDescription>Configure how R2R and O&M agents handle revenue recognition (ASC 606).</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="deferralPeriodMonths">Default Deferral Period (Months)</Label>
+                  <Input 
+                    type="number" 
+                    {...form.register("deferralPeriodMonths", { valueAsNumber: true })} 
+                  />
+                  <p className="text-xs text-muted-foreground">Standard period for spreading deferred revenue.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Audit & Compliance Rules</CardTitle>
+                <CardDescription>Settings for the Auditor agent and verification workflows.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="space-y-0.5">
+                    <Label>Require Audit Seal</Label>
+                    <p className="text-sm text-muted-foreground">Ensure every transaction is verified against a contract.</p>
+                  </div>
+                  <Switch 
+                    checked={form.watch("requireAuditSeal")}
+                    onCheckedChange={(checked) => form.setValue("requireAuditSeal", checked)}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="space-y-0.5">
+                    <Label>Auto-Reject Unverified</Label>
+                    <p className="text-sm text-muted-foreground">Automatically flag transactions that fail verification.</p>
+                  </div>
+                  <Switch 
+                    checked={form.watch("autoRejectUnverified")}
+                    onCheckedChange={(checked) => form.setValue("autoRejectUnverified", checked)}
+                  />
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label>Contract Verification Source</Label>
+                  <Select 
+                    onValueChange={(value) => form.setValue("contractVerificationSource", value)}
+                    defaultValue={form.getValues("contractVerificationSource")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manual">Manual Upload</SelectItem>
+                      <SelectItem value="stripe">Stripe Products</SelectItem>
+                      <SelectItem value="hubspot">HubSpot (Mock)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="fpa" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Forecasting & Planning (FP&A)</CardTitle>
+                <CardDescription>Configure parameters for the FP&A agent's runway calculations.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="targetMonthlyRevenue">Target Monthly Revenue</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      {...form.register("targetMonthlyRevenue", { valueAsNumber: true })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lowRunwayAlertThreshold">Low Runway Alert (Months)</Label>
+                    <Input 
+                      type="number" 
+                      {...form.register("lowRunwayAlertThreshold", { valueAsNumber: true })} 
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="voice-sms" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Voice & SMS Notifications</CardTitle>
+                <CardDescription>Configure ElevenLabs and Twilio output for agent summaries.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="space-y-0.5">
+                    <Label>Enable Voice Summary</Label>
+                    <p className="text-sm text-muted-foreground">Generate audio briefings after significant transactions.</p>
+                  </div>
+                  <Switch 
+                    checked={form.watch("enableVoiceSummary")}
+                    onCheckedChange={(checked) => form.setValue("enableVoiceSummary", checked)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="elevenLabsVoiceId">ElevenLabs Voice ID</Label>
+                  <Input {...form.register("elevenLabsVoiceId")} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="voiceScriptTemplate">Voice Script Template</Label>
+                  <textarea 
+                    className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    {...form.register("voiceScriptTemplate")} 
+                  />
+                  <p className="text-xs text-muted-foreground">Use placeholders: {"{{amount}}, {{runwayDays}}, {{zeroCashDate}}, {{percentAhead}}"}</p>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="space-y-0.5">
+                    <Label>Enable SMS Notifications</Label>
+                    <p className="text-sm text-muted-foreground">Send brief summaries via Twilio.</p>
+                  </div>
+                  <Switch 
+                    checked={form.watch("enableSMS")}
+                    onCheckedChange={(checked) => form.setValue("enableSMS", checked)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="smsRecipientNumber">SMS Recipient Number</Label>
+                  <Input placeholder="+1234567890" {...form.register("smsRecipientNumber")} />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}

@@ -1,31 +1,86 @@
 import { prisma } from "@/lib/prisma"
 import crypto from "crypto"
+import { ChatOpenAI } from "@langchain/openai"
 
 export async function runAuditorAgent(transactionId: string) {
-  const transaction = await prisma.transaction.findUnique({
+  const tx = await prisma.transaction.findUnique({
     where: { id: transactionId },
-    include: { organization: true }
+    include: { 
+      organization: { 
+        include: { financialSettings: true } 
+      } 
+    }
   })
-  if (!transaction) return null
+  if (!tx) return null
+
+  const settings = tx.organization.financialSettings
+  const requireAuditSeal = settings?.requireAuditSeal ?? true
+  const autoReject = settings?.autoRejectUnverified ?? false
 
   // Find matching contract
   const contract = await prisma.contract.findFirst({
     where: {
-      stripePaymentIntentId: transaction.stripePaymentIntentId,
-      organizationId: transaction.organizationId
+      stripePaymentIntentId: tx.stripePaymentIntentId,
+      organizationId: tx.organizationId
     }
   })
 
   let auditStatus = "failed"
   let auditHash = null
   let logMessage = ""
+  let anomalyDetected = false
+  let aiReasoning = ""
+
+  // 1. Check for basic anomalies (mocking historical comparison)
+  if (tx.amount > 5000) { // Example: unusually large transaction
+    anomalyDetected = true
+  }
+
+  // 2. AI-powered investigative reasoning
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const model = new ChatOpenAI({
+        modelName: "gpt-4o-mini",
+        temperature: 0,
+      })
+
+      const response = await model.invoke([
+        {
+          role: "system",
+          content: `You are a forensic auditor. Investigate this transaction for anomalies. 
+          Consider: amount vs description, contract availability, and common fraud patterns.
+          Respond with JSON: { "is_anomaly": boolean, "investigation_notes": string, "risk_score": number }`
+        },
+        {
+          role: "user",
+          content: `Transaction: ${tx.description}, Amount: ${tx.amount}, Contract Found: ${!!contract}`
+        }
+      ])
+
+      try {
+        const result = JSON.parse(response.content as string)
+        anomalyDetected = result.is_anomaly
+        aiReasoning = result.investigation_notes
+      } catch (e) {
+        console.error("Auditor AI reasoning failed", e)
+      }
+    } catch (error) {
+      console.error("Auditor AI failed", error)
+    }
+  }
 
   if (contract && contract.status === "signed") {
     auditStatus = "verified"
-    auditHash = crypto.createHash("sha256").update(`${contract.id}-${transaction.amount}`).digest("hex")
+    auditHash = crypto.createHash("sha256").update(`${contract.id}-${tx.amount}`).digest("hex")
     logMessage = `Auditor: Audit Hash Verified: Stripe ID matches Contract Terms. Hash: ${auditHash.substring(0, 8)}...`
+    
+    if (anomalyDetected) {
+      logMessage += ` WARNING: ${aiReasoning || "Unusual transaction pattern detected."}`
+    }
   } else {
-    logMessage = `Auditor: Verification failed – no matching contract for Stripe ID ${transaction.stripePaymentIntentId}`
+    auditStatus = autoReject ? "rejected" : "failed"
+    logMessage = `Auditor: Verification failed – no matching contract found for ${tx.description || tx.stripePaymentIntentId}.`
+    if (aiReasoning) logMessage += ` Investigation: ${aiReasoning}`
   }
 
   const updated = await prisma.transaction.update({
@@ -34,7 +89,11 @@ export async function runAuditorAgent(transactionId: string) {
       auditStatus,
       auditHash,
       agentLogs: {
-        push: { agent: "Auditor", message: logMessage, timestamp: new Date() }
+        push: { 
+          agent: "Auditor", 
+          message: logMessage, 
+          timestamp: new Date().toISOString() 
+        }
       }
     }
   })
