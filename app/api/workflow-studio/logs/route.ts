@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   });
 
   if (transaction && transaction.organizationId === orgId) {
-    let logs = [];
+    let logs: string[] = [];
     if (Array.isArray(transaction.agentLogs)) {
       logs = transaction.agentLogs.map((log: any) => {
         return `[${log.agent}] ${log.message}`;

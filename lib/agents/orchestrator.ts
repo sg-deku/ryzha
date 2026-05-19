@@ -15,14 +15,41 @@ export async function startAgentWorkflow(transactionId: string) {
   const orgId = transaction.organizationId
 
   try {
+    await prisma.transaction.update({
+      where: { id: transactionId },
+      data: { workflowStatus: "running" }
+    })
+
     // Helper to log and publish
     const logAndPublish = async (agent: string, message: string) => {
+      const logEntry = {
+        agent,
+        message,
+        timestamp: new Date().toISOString()
+      }
+      
+      const currentTx = await prisma.transaction.findUnique({ where: { id: transactionId } })
+      let currentLogs: any[] = []
+      
+      if (currentTx && currentTx.agentLogs) {
+        if (Array.isArray(currentTx.agentLogs)) {
+          currentLogs = currentTx.agentLogs
+        } else if (typeof currentTx.agentLogs === "string") {
+          try { currentLogs = JSON.parse(currentTx.agentLogs) } catch(e) {}
+        }
+      }
+      
+      await prisma.transaction.update({
+        where: { id: transactionId },
+        data: {
+          agentLogs: [...currentLogs, logEntry]
+        }
+      })
+
       await publishEvent(`org:${orgId}:events`, {
         type: "agent_log",
         transactionId,
-        agent,
-        message,
-        timestamp: new Date()
+        ...logEntry
       })
     }
 
@@ -44,19 +71,10 @@ export async function startAgentWorkflow(transactionId: string) {
     if (!afterAuditor || afterAuditor.auditStatus !== "verified") {
       const msg = afterAuditor?.auditStatus === "failed" ? "Verification failed" : "Audit error"
       await logAndPublish("Auditor", msg)
-      // If audit fails, stop workflow but still log
+      
       await prisma.transaction.update({
         where: { id: transactionId },
-        data: { 
-          workflowStatus: "error", 
-          agentLogs: { 
-            push: { 
-              agent: "Auditor", 
-              message: msg, 
-              timestamp: new Date() 
-            } 
-          } 
-        }
+        data: { workflowStatus: "error" }
       })
       return
     }
