@@ -1,29 +1,80 @@
 const { PrismaClient } = require('@prisma/client')
+const bcrypt = require('bcryptjs')
+
 const prisma = new PrismaClient()
 
 async function main() {
+  // 1. Seed Permissions
+  const permissions = [
+    "users:manage",
+    "roles:manage",
+    "invoices:manage",
+    "expenses:manage",
+    "reports:view",
+    "org:manage"
+  ]
+
+  for (const pName of permissions) {
+    await prisma.permission.upsert({
+      where: { name: pName },
+      update: {},
+      create: { name: pName }
+    })
+  }
+
+  const allPermissions = await prisma.permission.findMany()
+
+  // 2. Create Organization
   const org = await prisma.organization.upsert({
-    where: { slug: 'rhyza-hq' },
+    where: { slug: 'ryzha-hq' },
     update: {},
     create: {
       name: 'Ryzha HQ',
-      slug: 'rhyza-hq',
+      slug: 'ryzha-hq',
       plan: 'FREE',
     },
   })
 
-  const user = await prisma.user.upsert({
-    where: { email: 'admin@rhyza.com' },
+  // 3. Create Admin Role
+  const adminRole = await prisma.role.upsert({
+    where: { id: 'admin-role-id' },
     update: {},
     create: {
-      email: 'admin@rhyza.com',
-      name: 'Admin User',
+      id: 'admin-role-id',
+      name: 'Admin',
+      isSystem: true,
       organizationId: org.id,
-      role: 'ADMIN',
+      permissions: {
+        create: allPermissions.map(p => ({
+          permissionId: p.id
+        }))
+      }
+    }
+  })
+
+  // 4. Create Admin User
+  const hashedPassword = await bcrypt.hash("password123", 10)
+  
+  const user = await prisma.user.upsert({
+    where: { email: 'admin@ryzha.com' },
+    update: {
+      password: hashedPassword,
+    },
+    create: {
+      email: 'admin@ryzha.com',
+      name: 'Admin User',
+      password: hashedPassword,
+      status: 'ACTIVE',
+      organizations: {
+        create: {
+          organizationId: org.id,
+          roleId: adminRole.id
+        }
+      }
     },
   })
 
-  console.log('Seeded successfully:', { org, user })
+  console.log('Seeding completed:', { org: org.name, user: user.email })
 }
 
 main()
