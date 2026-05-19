@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { ArrowRight, BarChart3, ShieldCheck, Zap } from "lucide-react"
 
+export const dynamic = 'force-dynamic'
+
 export default async function LandingPage() {
   const session = await getServerSession(authOptions)
 
@@ -84,7 +86,7 @@ export default async function LandingPage() {
         <div className="max-w-4xl mx-auto bg-primary text-primary-foreground rounded-2xl p-8 md:p-12 text-center space-y-6 shadow-2xl animate-fade-up">
           <h2 className="text-3xl md:text-4xl font-bold">Ready to scale smarter?</h2>
           <p className="text-primary-foreground/80 text-lg max-w-2xl mx-auto">
-            Join 500+ startups managing their finances with Ryzha's AI brain.
+            Startups trust Ryzha's AI brain to manage their finances.
           </p>
           <Button size="lg" variant="secondary" asChild className="font-bold">
             <Link href="/signup">Get Started Now</Link>

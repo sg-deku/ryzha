@@ -26,73 +26,51 @@ interface DashboardClientProps {
 
 export function DashboardClient({ userName, orgId }: DashboardClientProps) {
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-lg">Welcome back, {userName}.</p>
-        </div>
-      </div>
-
+    <div className="space-y-8">
       {/* KPI row – white cards on light gray */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPIGrid />
       </div>
 
-      <div className="my-6 border-t" />
-
-      {/* Anomalies section */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Active Alerts</h2>
-        <AnomalyCarousel />
+      {/* Simulator + Agent Log – side by side on large screens */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Cash Flow Forecast</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CashFlowForecast />
+          </CardContent>
+        </Card>
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Agent Log</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ActivityFeed />
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="my-6 border-t" />
-
-      {/* Main breakdown – elevated cards for primary data */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Cash Flow Forecast</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CashFlowForecast />
-            </CardContent>
-          </Card>
-          
-          <Card className="card-default">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Recent Transactions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TransactionFeed orgId={orgId} />
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="space-y-8">
-          <DashboardAlerts />
-          
-          <Card className="card-default">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Top Expenses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TransactionList orgId={orgId} />
-            </CardContent>
-          </Card>
-          
-          <Card className="card-default">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ActivityFeed />
-            </CardContent>
-          </Card>
-        </div>
+      {/* Audit + Runway – bottom row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="card-default">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Audit Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DashboardAlerts />
+          </CardContent>
+        </Card>
+        <Card className="card-default">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Runway Chart</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TransactionList orgId={orgId} />
+          </CardContent>
+        </Card>
       </div>
     </div>
-  )
+  );
 }

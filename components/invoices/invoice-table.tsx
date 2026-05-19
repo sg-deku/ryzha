@@ -251,12 +251,13 @@ export function InvoiceTable({ initialInvoices }: InvoiceTableProps) {
                   <TableCell className="font-medium">
                     <HoverCard openDelay={200}>
                       <HoverCardTrigger asChild>
-                        <button 
+                        <Button 
+                          variant="link"
                           onClick={() => router.push(`/invoices/${invoice.id}`)}
-                          className="hover:underline text-blue-600 dark:text-blue-400"
+                          className="p-0 h-auto font-medium text-primary hover:no-underline"
                         >
                           {invoice.invoiceNumber}
-                        </button>
+                        </Button>
                       </HoverCardTrigger>
                       <HoverCardContent className="w-80">
                         <div className="flex justify-between space-x-4">

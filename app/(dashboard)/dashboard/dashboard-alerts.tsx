@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { AnomalyCard } from "@/components/alerts/anomaly-card"
+import { Button } from "@/components/ui/button"
 
 export function DashboardAlerts() {
   const [anomalies, setAnomalies] = useState<any[]>([])
@@ -43,12 +44,14 @@ export function DashboardAlerts() {
         <h2 className="text-xl font-bold flex items-center gap-2">
           <span>🔔</span> Expense Anomalies
         </h2>
-        <button 
+        <Button 
+          variant="ghost"
+          size="sm"
           onClick={handleBulkResolve}
-          className="text-xs text-blue-600 hover:underline"
+          className="text-xs text-primary hover:underline h-auto p-0"
         >
           Mark all as reviewed
-        </button>
+        </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {anomalies.map(a => (

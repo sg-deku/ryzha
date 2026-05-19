@@ -2,6 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Brain, TrendingUp, AlertCircle, RefreshCw, PlusCircle } from "lucide-react"
 
 export function CashFlowForecast() {
   const [forecast, setForecast] = useState<any>(null)
@@ -45,7 +51,18 @@ export function CashFlowForecast() {
     fetchForecast(newScenarios)
   }
 
-  if (loading && !forecast) return <div className="p-8 text-center bg-white rounded-xl border">Analysing data and projecting cash flow...</div>
+  if (loading && !forecast) {
+    return (
+      <Card className="animate-pulse">
+        <CardHeader>
+          <Skeleton className="h-8 w-64" />
+        </CardHeader>
+        <CardContent className="h-[300px] flex items-center justify-center">
+          <RefreshCw className="h-8 w-8 text-muted-foreground animate-spin" />
+        </CardContent>
+      </Card>
+    )
+  }
 
   // Add confidence interval mock if not present
   const chartData = forecast?.dailyForecast?.map((day: any) => ({
@@ -55,78 +72,74 @@ export function CashFlowForecast() {
   })) || []
 
   return (
-    <div className="p-6 space-y-6 bg-white rounded-xl border">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-xl font-bold">AI Cash Flow Forecast (90 Days)</h2>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 p-4 rounded-lg border border-primary/10">
+        <div className="flex items-center gap-2">
+          <Brain className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-bold">AI Cash Flow Forecast (90 Days)</h2>
+        </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <input 
-            type="text" 
+          <Input 
             placeholder="What if: Add new hire" 
-            className="p-2 border rounded text-sm flex-1 sm:w-auto"
+            className="flex-1 sm:w-64 bg-background"
             value={whatIfDesc}
             onChange={e => setWhatIfDesc(e.target.value)}
           />
-          <input 
+          <Input 
             type="number" 
             placeholder="Amount" 
-            className="p-2 border rounded text-sm w-24"
+            className="w-24 bg-background"
             value={whatIfAmount}
             onChange={e => setWhatIfAmount(e.target.value)}
           />
-          <button 
+          <Button 
             onClick={handleAddScenario}
-            className="px-4 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 whitespace-nowrap"
             disabled={loading}
+            className="whitespace-nowrap"
           >
-            {loading ? "..." : "Re-forecast"}
-          </button>
+            {loading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+            Re-forecast
+          </Button>
         </div>
       </div>
 
       {forecast && (
-        <div className="space-y-6">
-          <div className="h-[300px] w-full" data-testid="cashflow-chart">
+        <div className="space-y-8">
+          <div className="h-[350px] w-full mt-4" data-testid="cashflow-chart">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorConfidence" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#93c5fd" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#93c5fd" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} dy={10} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} dy={10} />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fontSize: 12, fill: "#6b7280" }} 
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} 
                   tickFormatter={(val) => `$${val/1000}k`} 
                   dx={-10}
                 />
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'var(--card)', 
+                    borderColor: 'var(--border)', 
+                    borderRadius: 'var(--radius)',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
                   formatter={(value: any, name: any) => {
                     if (name === "confidenceRange") return null
                     return [`$${Number(value).toLocaleString()}`, "Predicted Balance"]
                   }}
-                  labelStyle={{ color: '#374151', fontWeight: 'bold', marginBottom: '4px' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="confidenceRange" 
-                  stroke="none" 
-                  fill="url(#colorConfidence)" 
-                  isAnimationActive={true} 
-                  animationDuration={1500}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="balance" 
-                  stroke="#3b82f6" 
-                  strokeWidth={2} 
+                  stroke="var(--primary)" 
+                  strokeWidth={3} 
                   fill="url(#colorBalance)" 
                   isAnimationActive={true} 
                   animationDuration={1500}
@@ -136,47 +149,61 @@ export function CashFlowForecast() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                <span>🔄</span> Recurring Expenses Identified
-              </h3>
-              <div className="space-y-2">
+            <Card className="card-default">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-primary" />
+                  Recurring Expenses
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
                 {forecast.recurringExpenses?.map((ex: any, i: number) => (
-                  <div key={i} className="p-3 bg-gray-50 rounded flex justify-between items-center text-sm">
-                    <span>{ex.description}</span>
-                    <span className="font-bold">${ex.amount}</span>
+                  <div key={i} className="p-3 bg-muted/30 rounded-lg flex justify-between items-center text-sm border border-transparent hover:border-border transition-colors">
+                    <span className="font-medium">{ex.description}</span>
+                    <Badge variant="secondary" className="font-bold">${ex.amount}</Badge>
                   </div>
                 ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                <span>⚠️</span> Late Payment Risks
-              </h3>
-              <div className="space-y-2">
+            <Card className="card-default">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  Late Payment Risks
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
                 {forecast.latePaymentRisks?.map((risk: any, i: number) => (
-                  <div key={i} className="p-3 bg-gray-50 rounded flex justify-between items-center text-sm">
-                    <span>{risk.client}</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                      risk.riskLevel === 'high' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
+                  <div key={i} className="p-3 bg-muted/30 rounded-lg flex justify-between items-center text-sm border border-transparent hover:border-border transition-colors">
+                    <span className="font-medium">{risk.client}</span>
+                    <Badge variant={risk.riskLevel === 'high' ? 'destructive' : 'outline'} className="uppercase text-[10px]">
                       {risk.riskLevel} Risk
-                    </span>
+                    </Badge>
                   </div>
                 ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-            <h3 className="text-sm font-bold text-blue-800 mb-2">AI Insights</h3>
-            <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
-              {forecast.insights?.map((insight: string, i: number) => (
-                <li key={i}>{insight}</li>
-              ))}
-            </ul>
-          </div>
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 bg-primary/10 rounded-md">
+                  <Brain className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-sm font-bold text-primary">AI Insights</h3>
+              </div>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-8">
+                {forecast.insights?.map((insight: string, i: number) => (
+                  <li key={i} className="text-sm flex items-start gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{insight}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

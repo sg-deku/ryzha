@@ -52,13 +52,13 @@ export function Sidebar() {
   if (!mounted) return null
 
   return (
-    <TooltipProvider>
-      <aside
-        className={cn(
-          "relative hidden h-screen border-r bg-background transition-all duration-300 md:flex flex-col",
-          collapsed ? "w-[72px]" : "w-64"
-        )}
-      >
+      <TooltipProvider>
+        <aside
+          className={cn(
+            "flex h-screen flex-col border-r bg-background transition-all duration-300",
+            collapsed ? "w-16" : "w-64"
+          )}
+        >
         <div className="flex h-16 items-center border-b px-4">
           <div className="flex items-center gap-2 font-bold">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">

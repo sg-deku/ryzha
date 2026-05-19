@@ -30,11 +30,11 @@ export function MainLayout({ children }: MainLayoutProps) {
     : "U"
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Dashboard Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6 shrink-0">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
           <div className="flex items-center gap-4 flex-1">
             <div className="relative w-full max-w-md hidden md:block">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -79,12 +79,8 @@ export function MainLayout({ children }: MainLayoutProps) {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-muted/20 pb-16 md:pb-0">
-          <div className="container px-4 md:px-8 py-6 max-w-7xl mx-auto">
-            <PageTransition>
-              {children}
-            </PageTransition>
-          </div>
+        <main className="flex-1 overflow-y-auto bg-muted/20 p-4 md:p-6">
+          {children}
         </main>
       </div>
       <BottomNav />
