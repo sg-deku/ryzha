@@ -162,6 +162,12 @@ export function Sidebar() {
               label="Users & Roles"
               collapsed={collapsed}
             />
+            <SidebarItem
+              href="/workflow-studio"
+              icon={Workflow}
+              label="Workflow Studio"
+              collapsed={collapsed}
+            />
           </Authorized>
 
           <Authorized permission="roles:manage">
@@ -187,15 +193,6 @@ export function Sidebar() {
               href="/settings/financial-engine"
               icon={Brain}
               label="Financial Engine"
-              collapsed={collapsed}
-            />
-          </Authorized>
-
-          <Authorized permission="agent:manage">
-            <SidebarItem
-              href="/workflow-studio"
-              icon={Workflow}
-              label="Workflow Studio"
               collapsed={collapsed}
             />
           </Authorized>
