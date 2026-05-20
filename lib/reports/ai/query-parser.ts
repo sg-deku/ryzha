@@ -1,5 +1,4 @@
-import { getLLM } from "@/lib/ai/llm"
-import { HumanMessage } from "@langchain/core/messages"
+import { invokeAI } from "@/lib/ai/client"
 import { StructuredQuery, ReportType } from "./types"
 
 function defaultDateRange() {
@@ -82,32 +81,16 @@ For runway and ar_aging, parameters can be an empty object {}.
 If the question cannot be mapped, return {"error":"unknown"}.`
 
   try {
-    const llm = await getLLM(organizationId, { temperature: 0 })
-    const response = await llm.invoke([new HumanMessage(prompt)])
-
-    let content: string
-    if (typeof response.content === "string") {
-      content = response.content
-    } else if (Array.isArray(response.content)) {
-      content = response.content
-        .map((c: any) => (typeof c === "string" ? c : c?.text ?? ""))
-        .join("")
-    } else {
-      content = JSON.stringify(response.content)
-    }
-
-    console.log("[query-parser] LLM raw response:", content)
+    const content = await invokeAI(organizationId, prompt, { temperature: 0, json: true })
+    console.log("[query-parser] LLM response:", content)
 
     const result = extractJSON(content)
     if (!result || result.error) {
-      console.warn("[query-parser] LLM returned error or unparseable — falling back to keywords")
       return keywordFallback(query)
     }
-
     if (!result.reportType) {
       return keywordFallback(query)
     }
-
     return result as StructuredQuery
   } catch (err) {
     console.error("[query-parser] LLM call failed:", err)

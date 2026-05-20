@@ -1,5 +1,4 @@
-import { getLLM } from "@/lib/ai/llm"
-import { HumanMessage } from "@langchain/core/messages"
+import { invokeAI } from "@/lib/ai/client"
 
 export async function generateNarrative(
   reportType: string,
@@ -18,11 +17,7 @@ ${JSON.stringify(data, null, 2)}
 Focus on key trends, anomalies, or actionable insights. Do not repeat obvious numbers.`
 
   try {
-    const llm = await getLLM(organizationId, { temperature: 0.5 })
-    const response = await llm.invoke([new HumanMessage(prompt)])
-    return typeof response.content === "string"
-      ? response.content
-      : "Unable to generate summary."
+    return await invokeAI(organizationId, prompt, { temperature: 0.5 })
   } catch (err) {
     console.error("Narrative generator error:", err)
     return "Unable to generate summary at this time."
