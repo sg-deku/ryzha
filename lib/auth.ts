@@ -31,6 +31,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
+            console.error("[auth] Missing credentials")
             return null
           }
           
@@ -46,17 +47,29 @@ export const authOptions: NextAuthOptions = {
             }
           })
 
-          if (!user || !user.password) {
+          if (!user) {
+            console.error(`[auth] User not found: ${credentials.email}`)
+            return null
+          }
+
+          if (!user.password) {
+            console.error(`[auth] User has no password: ${credentials.email}`)
             return null
           }
           
           const isValid = await bcrypt.compare(credentials.password, user.password)
           
           if (!isValid) {
+            console.error(`[auth] Invalid password for: ${credentials.email}`)
             return null
           }
 
           const userOrg = user.organizations[0]
+
+          if (!userOrg) {
+            console.error(`[auth] User has no org membership: ${credentials.email}`)
+            return null
+          }
           
           return { 
             id: user.id, 
@@ -66,7 +79,7 @@ export const authOptions: NextAuthOptions = {
             role: userOrg?.role?.name || "MEMBER"
           }
         } catch (error) {
-          console.error("Auth error:", error)
+          console.error("[auth] Exception in authorize:", error)
           return null
         }
       }

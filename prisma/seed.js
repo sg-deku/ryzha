@@ -62,6 +62,7 @@ async function main() {
     where: { email: 'admin@ryzha.com' },
     update: {
       password: hashedPassword,
+      status: 'ACTIVE',
     },
     create: {
       email: 'admin@ryzha.com',
@@ -76,6 +77,17 @@ async function main() {
       }
     },
   })
+
+  // Ensure org membership exists even on re-deploys (upsert path skips create above)
+  const existingMembership = await prisma.organizationMembership.findFirst({
+    where: { userId: user.id, organizationId: org.id }
+  })
+  if (!existingMembership) {
+    await prisma.organizationMembership.create({
+      data: { userId: user.id, organizationId: org.id, roleId: adminRole.id }
+    })
+    console.log('Created missing org membership for admin user')
+  }
 
   await prisma.financialSettings.upsert({
     where: { organizationId: org.id },
