@@ -28,6 +28,14 @@ export async function POST(req: Request) {
         data: {
           name: organizationName,
           slug: organizationName.toLowerCase().replace(/ /g, "-") + "-" + Math.random().toString(36).substring(2, 7),
+          onboardingCompleted: true,
+        }
+      })
+
+      await tx.financialSettings.create({
+        data: {
+          organizationId: organization.id,
+          deferredRevenueRules: ["annual", "yearly", "subscription"],
         }
       })
 
@@ -39,7 +47,9 @@ export async function POST(req: Request) {
         "invoices:manage",
         "expenses:manage",
         "reports:view",
-        "org:manage"
+        "org:manage",
+        "financial:manage",
+        "agent:manage"
       ]
 
       for (const pName of permissions) {

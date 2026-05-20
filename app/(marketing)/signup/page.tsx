@@ -25,7 +25,7 @@ export default function SignupPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, orgName }),
+        body: JSON.stringify({ name, email, password, organizationName: orgName }),
       })
 
       if (res.ok) {
@@ -33,7 +33,7 @@ export default function SignupPage() {
         router.push("/login")
       } else {
         const data = await res.json()
-        toast.error(data.message || "Something went wrong. Please try again.")
+        toast.error(data.error || data.message || "Something went wrong. Please try again.")
       }
     } catch (error) {
       toast.error("An error occurred. Please try again later.")
