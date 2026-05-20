@@ -20,6 +20,7 @@ export default function MarketingLayout({
             <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
               <Link href="/" className="hover:text-primary transition-colors text-muted-foreground">Home</Link>
               <Link href="/about" className="hover:text-primary transition-colors text-muted-foreground">About Us</Link>
+              <Link href="/contact" className="hover:text-primary transition-colors text-muted-foreground">Contact</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
@@ -44,6 +45,9 @@ export default function MarketingLayout({
           <div className="flex gap-4">
             <Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">
               About Us
+            </Link>
+            <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              Contact
             </Link>
             <Link href="/api-docs" className="text-sm text-muted-foreground hover:text-primary transition-colors">
               API Documentation
