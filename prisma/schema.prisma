@@ -213,6 +213,10 @@ model FinancialSettings {
   smtpUser                     String?
   smtpPass                     String?
 
+  // Stripe Integration
+  stripeSecretKey              String?
+  stripeWebhookSecret          String?
+
   updatedAt                    DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])

@@ -18,6 +18,7 @@ import {
   ShoppingCart,
   Workflow,
   Globe,
+  FilePenLine,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -94,6 +95,12 @@ export function Sidebar() {
             href="/reports"
             icon={BarChart}
             label="Reports"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/contracts"
+            icon={FilePenLine}
+            label="Contracts"
             collapsed={collapsed}
           />
 

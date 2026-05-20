@@ -28,17 +28,23 @@ export async function GET() {
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  
+
   const body = await req.json()
-  
-  // Remove id and organizationId from body to prevent accidental updates
   const { id, organizationId, ...updateData } = body
-  
-  const updated = await prisma.financialSettings.upsert({
-    where: { organizationId: session.user.organizationId },
-    update: updateData,
-    create: { ...updateData, organizationId: session.user.organizationId }
-  })
-  
-  return NextResponse.json(updated)
+
+  try {
+    const updated = await prisma.financialSettings.upsert({
+      where: { organizationId: session.user.organizationId },
+      update: updateData,
+      create: {
+        deferredRevenueRules: ["annual", "yearly", "subscription"],
+        ...updateData,
+        organizationId: session.user.organizationId,
+      },
+    })
+    return NextResponse.json(updated)
+  } catch (err: any) {
+    console.error("[settings/financial PUT]", err)
+    return NextResponse.json({ error: err.message || "Failed to save settings" }, { status: 500 })
+  }
 }
