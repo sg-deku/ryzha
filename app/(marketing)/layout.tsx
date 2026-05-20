@@ -11,9 +11,7 @@ export default function MarketingLayout({
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              R
-            </div>
+            <img src="/logo.png" alt="Ryzha Logo" className="h-8 w-8 object-contain rounded-md" />
             <span className="text-xl">Ryzha</span>
           </Link>
           <div className="flex items-center gap-4 md:gap-6">
