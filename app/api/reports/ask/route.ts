@@ -57,7 +57,12 @@ export async function POST(req: Request) {
   const structured = await parseNaturalLanguageQuery(query, orgId)
   if (!structured || !structured.reportType) {
     return NextResponse.json(
-      { error: "Could not understand the question. Please rephrase." },
+      {
+        error:
+          "I can only answer questions about your financial data. Try asking: " +
+          '"Show me runway", "Expenses by category last month", "Cash flow this quarter", ' +
+          '"Which customers are overdue?", or "Profit and loss this year".',
+      },
       { status: 400 }
     )
   }
