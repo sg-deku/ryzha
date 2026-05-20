@@ -10,20 +10,18 @@ export default function MarketingLayout({
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 font-bold">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                R
-              </div>
-              <span className="text-xl">Ryzha</span>
-            </Link>
-            <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
-              <Link href="/" className="hover:text-primary transition-colors text-muted-foreground">Home</Link>
-              <Link href="/about" className="hover:text-primary transition-colors text-muted-foreground">About Us</Link>
-              <Link href="/contact" className="hover:text-primary transition-colors text-muted-foreground">Contact</Link>
+          <Link href="/" className="flex items-center gap-2 font-bold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              R
+            </div>
+            <span className="text-xl">Ryzha</span>
+          </Link>
+          <div className="flex items-center gap-4 md:gap-6">
+            <nav className="hidden md:flex items-center gap-6">
+              <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">Home</Link>
+              <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">About Us</Link>
+              <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors">Contact Us</Link>
             </nav>
-          </div>
-          <div className="flex items-center gap-4">
             <ThemeToggle />
             <Link 
               href="/login"

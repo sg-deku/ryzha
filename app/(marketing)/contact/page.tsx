@@ -27,8 +27,9 @@ export default function ContactPage() {
                 Email
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-muted-foreground">
-              hello@ryzha.com
+            <CardContent className="text-muted-foreground space-y-2">
+              <p>sushmit.ghosh@icloud.com</p>
+              <p>karyrocha3979@hotmail.com</p>
             </CardContent>
           </Card>
 
@@ -40,8 +41,6 @@ export default function ContactPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-1">
-              <p>123 Startup Blvd</p>
-              <p>San Francisco, CA 94107</p>
             </CardContent>
           </Card>
         </div>
