@@ -1,50 +1,146 @@
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
+
+function fmt(n: number) {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
+  return `$${n.toFixed(0)}`
+}
+
+function pctChange(current: number, previous: number): string {
+  if (previous === 0) return current > 0 ? "+100%" : "0%"
+  const pct = ((current - previous) / previous) * 100
+  return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`
+}
+
+function monthStart(monthsAgo: number): Date {
+  const d = new Date()
+  d.setDate(1)
+  d.setHours(0, 0, 0, 0)
+  d.setMonth(d.getMonth() - monthsAgo)
+  return d
+}
+
+function monthEnd(monthsAgo: number): Date {
+  const d = monthStart(monthsAgo - 1)
+  d.setMilliseconds(d.getMilliseconds() - 1)
+  return d
+}
 
 export async function GET() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.organizationId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const orgId = session.user.organizationId
+
+  const [settings, salesOrders, expenses7mo, transactions7mo] = await Promise.all([
+    prisma.financialSettings.findUnique({
+      where: { organizationId: orgId },
+      select: { bankBalance: true, averageMonthlyExpenses: true },
+    }),
+    prisma.salesOrder.findMany({
+      where: { organizationId: orgId, status: "INVOICED" },
+      select: { totalAmount: true },
+    }),
+    prisma.expense.findMany({
+      where: {
+        organizationId: orgId,
+        date: { gte: monthStart(6) },
+      },
+      select: { amount: true, date: true },
+    }),
+    prisma.transaction.findMany({
+      where: {
+        organizationId: orgId,
+        workflowStatus: "completed",
+        createdAt: { gte: monthStart(6) },
+      },
+      select: { amount: true, createdAt: true },
+    }),
+  ])
+
+  const bankBalance = settings?.bankBalance ?? 0
+
+  const outstandingTotal = salesOrders.reduce((s, o) => s + o.totalAmount, 0)
+
+  const monthlyRevenue: number[] = []
+  const monthlyExpenses: number[] = []
+  for (let i = 6; i >= 0; i--) {
+    const start = monthStart(i)
+    const end = i === 0 ? new Date() : monthEnd(i)
+    monthlyRevenue.push(
+      transactions7mo
+        .filter(t => new Date(t.createdAt) >= start && new Date(t.createdAt) <= end)
+        .reduce((s, t) => s + t.amount, 0)
+    )
+    monthlyExpenses.push(
+      expenses7mo
+        .filter(e => new Date(e.date) >= start && new Date(e.date) <= end)
+        .reduce((s, e) => s + e.amount, 0)
+    )
+  }
+
+  const currentMRR = monthlyRevenue[6]
+  const prevMRR = monthlyRevenue[5]
+  const currentExpenses = monthlyExpenses[6]
+  const prevExpenses = monthlyExpenses[5]
+
+  const burnRate = settings?.averageMonthlyExpenses ?? (currentExpenses || 0)
+  const runway = burnRate > 0 ? bankBalance / burnRate : 0
+  const prevRunway = burnRate > 0 ? (bankBalance - currentExpenses + prevExpenses) / burnRate : 0
+
+  const reconciledCount = await prisma.transaction.count({
+    where: { organizationId: orgId, workflowStatus: "completed" },
+  })
+
   return NextResponse.json([
     {
       title: "MRR",
-      value: "$12,450",
-      change: "+12.5%",
-      data: [10000, 10500, 11000, 11200, 11500, 12000, 12450]
+      value: fmt(currentMRR),
+      change: pctChange(currentMRR, prevMRR),
+      data: monthlyRevenue,
     },
     {
       title: "Cash Balance",
-      value: "$45,231",
-      change: "+5.2%",
-      data: [42000, 43000, 41500, 42200, 44000, 44800, 45231]
+      value: fmt(bankBalance),
+      change: pctChange(bankBalance, bankBalance - currentMRR + currentExpenses),
+      data: Array(6).fill(bankBalance).map((v, i) => Math.max(0, v - (6 - i) * (burnRate / 30 * 5))).concat([bankBalance]),
     },
     {
       title: "Outstanding Invoices",
-      value: "$8,200",
-      change: "-2.4%",
-      data: [9000, 8800, 8500, 8600, 8400, 8300, 8200]
+      value: fmt(outstandingTotal),
+      change: outstandingTotal > 0 ? "Needs collection" : "All clear",
+      data: Array(7).fill(outstandingTotal),
     },
     {
       title: "Expenses This Month",
-      value: "$3,120",
-      change: "+1.2%",
-      data: [500, 1000, 1200, 1800, 2200, 2800, 3120]
+      value: fmt(currentExpenses),
+      change: pctChange(currentExpenses, prevExpenses),
+      data: monthlyExpenses,
     },
     {
       title: "Runway",
-      value: "14.2 mo",
-      change: "+0.5 mo",
-      data: [12.1, 12.5, 12.8, 13.0, 13.5, 13.8, 14.2]
+      value: runway > 0 ? `${runway.toFixed(1)} mo` : "—",
+      change: runway > 0 ? pctChange(runway, prevRunway) : "Set bank balance",
+      data: Array(7).fill(0).map((_, i) => Math.max(0, runway - (6 - i) * 0.1)),
     },
     {
       title: "Burn Rate",
-      value: "$3,180/mo",
-      change: "-5.4%",
-      data: [3500, 3450, 3400, 3350, 3300, 3200, 3180]
+      value: burnRate > 0 ? `${fmt(burnRate)}/mo` : "—",
+      change: pctChange(burnRate, prevExpenses || burnRate),
+      data: monthlyExpenses.map(e => e || burnRate),
     },
     {
-      title: "Churn Rate",
-      value: "1.2%",
-      change: "-0.2%",
-      data: [2.1, 1.9, 1.8, 1.6, 1.5, 1.4, 1.2]
-    }
+      title: "Reconciled",
+      value: `${reconciledCount} tx`,
+      change: currentMRR > 0 ? `${fmt(currentMRR)} this mo` : "No activity",
+      data: monthlyRevenue,
+    },
   ])
 }

@@ -19,6 +19,7 @@ import {
   Workflow,
   Globe,
   FilePenLine,
+  ArrowLeftRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -101,6 +102,12 @@ export function Sidebar() {
             href="/contracts"
             icon={FilePenLine}
             label="Contracts"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/transactions"
+            icon={ArrowLeftRight}
+            label="Transactions"
             collapsed={collapsed}
           />
 

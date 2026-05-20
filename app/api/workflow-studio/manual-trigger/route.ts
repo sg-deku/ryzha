@@ -85,6 +85,9 @@ export async function POST(req: Request) {
       const amount = Number(payload?.amount) || 1500
       const customerName = payload?.customerName || `Mock Customer ${Date.now()}`
       const customerEmail = payload?.customerEmail || "mock@customer.com"
+      const scenario = payload?.scenario || "new_customer"
+
+      const orderStatus = scenario === "churn_risk" ? "INVOICED" : "PAID"
 
       const customer = await prisma.customer.create({
         data: { name: customerName, email: customerEmail, organizationId: orgId },
@@ -96,11 +99,11 @@ export async function POST(req: Request) {
           customerId: customer.id,
           totalAmount: amount,
           organizationId: orgId,
-          status: "PAID",
+          status: orderStatus,
         },
       })
       executionId = so.id
-      startO2CWorkflow(executionId).catch(console.error)
+      startO2CWorkflow(executionId, scenario).catch(console.error)
     }
 
     return NextResponse.json({ executionId })

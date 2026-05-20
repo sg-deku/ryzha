@@ -49,7 +49,13 @@ export async function runMatchingAgent(vendorInvoiceId: string) {
       }
     }
   } else {
-    logMessage = "Matching Agent: No PO found. Proceeding with 2-way verification (Direct Invoice)."
+    status = "DISPUTED"
+    logMessage = "Matching Agent: No Purchase Order found. Invoice flagged as DISPUTED — manual approval required."
+  }
+
+  if (status === "MATCHED" && invoice.dueDate && new Date(invoice.dueDate) < new Date()) {
+    const daysOverdue = Math.floor((Date.now() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24))
+    logMessage = `${logMessage} WARNING: Invoice is ${daysOverdue} day(s) overdue (due ${new Date(invoice.dueDate).toLocaleDateString()}) — expedite payment approval.`
   }
 
   const updated = await prisma.vendorInvoice.update({

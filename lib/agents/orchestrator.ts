@@ -218,7 +218,7 @@ export async function startP2PWorkflow(vendorInvoiceId: string) {
   }
 }
 
-export async function startO2CWorkflow(salesOrderId: string) {
+export async function startO2CWorkflow(salesOrderId: string, scenario?: string) {
   const order = await prisma.salesOrder.findUnique({
     where: { id: salesOrderId },
     include: { organization: true, customer: true }
@@ -270,8 +270,15 @@ export async function startO2CWorkflow(salesOrderId: string) {
       await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "completed" } })
 
       await startAgentWorkflow(transaction.id)
+    } else if (order.status === "INVOICED") {
+      await appendO2CLog("Collections", `[1/1] Order is INVOICED but unpaid — running collections check...`)
+      const daysSinceCreated = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+      await appendO2CLog("Collections", `Customer: ${order.customer.name} (${order.customer.email ?? "no email"}) | Amount: $${order.totalAmount} | Days since invoiced: ${daysSinceCreated} | Action: Flag for dunning outreach`)
+      await appendO2CLog("Collections", `Dunning recommended — ${order.customer.name} has an open invoice of $${order.totalAmount} (Order #${order.orderNumber}) with no payment received. Schedule follow-up contact.`)
+      await appendO2CLog("Orchestrator", `O2C Collections flow COMPLETED | Order #${order.orderNumber} flagged. No financial pipeline triggered until payment is received.`)
+      await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "completed" } })
     } else {
-      await appendO2CLog("Orchestrator", `O2C Workflow SKIPPED | Order #${order.orderNumber} is in status "${order.status}" — agent pipeline only runs on PAID orders. Update the order to PAID to proceed.`)
+      await appendO2CLog("Orchestrator", `O2C Workflow SKIPPED | Order #${order.orderNumber} is in status "${order.status}" — expected PAID or INVOICED. No action taken.`)
       await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "error" } })
     }
 
