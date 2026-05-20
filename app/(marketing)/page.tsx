@@ -14,6 +14,9 @@ export default async function LandingPage() {
       {/* Hero Section */}
       <section className="w-full py-20 lg:py-32 flex flex-col items-center text-center px-4">
         <div className="max-w-3xl space-y-6 animate-fade-up">
+          <div className="flex justify-center mb-4">
+            <img src="/logo.png?v=2" alt="Ryzha Logo" className="h-24 w-24 md:h-32 md:w-32 object-contain dark:invert" />
+          </div>
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
             Financial brain for <span className="text-primary">startups</span>
           </h1>
