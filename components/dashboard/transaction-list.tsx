@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AuditSeal } from "./audit-seal"
+import Link from "next/link"
 
 interface Transaction {
   id: string
@@ -58,7 +59,7 @@ export function TransactionList({ orgId }: { orgId: string | undefined }) {
           </p>
         )}
         {transactions.map((tx) => (
-          <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg bg-card hover:bg-accent/10 transition-colors">
+          <Link href={`/transactions/${tx.id}`} key={tx.id} className="flex items-center justify-between p-3 border rounded-lg bg-card hover:bg-accent/10 transition-colors cursor-pointer">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-sm">
@@ -76,7 +77,7 @@ export function TransactionList({ orgId }: { orgId: string | undefined }) {
                 {new Date(tx.createdAt).toLocaleDateString()}
               </span>
             </div>
-          </div>
+          </Link>
         ))}
       </CardContent>
     </Card>

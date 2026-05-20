@@ -12,17 +12,20 @@ import { ArrowLeft, Upload, FileText, Plus, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
-export default function UploadVendorInvoice() {
+export default function VendorInvoiceForm({ initialData }: { initialData?: any }) {
   const router = useRouter()
+  const isEditing = !!initialData?.id
   const [file, setFile] = useState<File | null>(null)
   const [vendors, setVendors] = useState<any[]>([])
-  const [vendorId, setVendorId] = useState("")
-  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Date.now().toString().slice(-6)}`)
-  const [purchaseOrderId, setPurchaseOrderId] = useState("")
+  const [vendorId, setVendorId] = useState(initialData?.vendorId || "")
+  const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoiceNumber || `INV-${Date.now().toString().slice(-6)}`)
+  const [purchaseOrderId, setPurchaseOrderId] = useState(initialData?.purchaseOrderId || "")
   const [isLoading, setIsLoading] = useState(false)
-  const [lineItems, setLineItems] = useState([
-    { description: "", quantity: 1, unitPrice: 0 }
-  ])
+  const [lineItems, setLineItems] = useState(
+    initialData?.lineItems?.length > 0 
+      ? initialData.lineItems 
+      : [{ description: "", quantity: 1, unitPrice: 0 }]
+  )
 
   useEffect(() => {
     fetch("/api/vendors")
@@ -38,7 +41,7 @@ export default function UploadVendorInvoice() {
   }
 
   const removeLineItem = (index: number) => {
-    setLineItems(lineItems.filter((_, i) => i !== index))
+    setLineItems(lineItems.filter((_: any, i: number) => i !== index))
   }
 
   const updateLineItem = (index: number, field: string, value: any) => {
@@ -47,27 +50,38 @@ export default function UploadVendorInvoice() {
     setLineItems(newItems)
   }
 
-  const total = lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
+  const total = lineItems.reduce((sum: number, item: any) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     
-    // We create the invoice record manually
     try {
-      const res = await fetch("/api/vendor-invoices", {
-        method: "POST",
+      const url = isEditing ? `/api/vendor-invoices/${initialData.id}` : "/api/vendor-invoices"
+      const method = isEditing ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vendorId, invoiceNumber, purchaseOrderId, lineItems })
+        body: JSON.stringify({ 
+          vendorId, 
+          invoiceNumber, 
+          purchaseOrderId: purchaseOrderId || null, 
+          lineItems: lineItems.map((item: any) => ({
+            ...item,
+            quantity: Number(item.quantity),
+            unitPrice: Number(item.unitPrice)
+          }))
+        })
       })
 
-      if (!res.ok) throw new Error("Failed to create vendor invoice")
+      if (!res.ok) throw new Error(isEditing ? "Failed to update vendor invoice" : "Failed to create vendor invoice")
 
-      toast.success("Vendor Invoice created successfully")
+      toast.success(isEditing ? "Vendor Invoice updated successfully" : "Vendor Invoice created successfully")
       router.push("/vendor-invoices")
       router.refresh()
     } catch (err) {
-      toast.error("Failed to create vendor invoice")
+      toast.error(isEditing ? "Failed to update vendor invoice" : "Failed to create vendor invoice")
     } finally {
       setIsLoading(false)
     }
@@ -81,38 +95,40 @@ export default function UploadVendorInvoice() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h2 className="text-3xl font-bold tracking-tight">Upload / Enter Vendor Invoice</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{isEditing ? "Edit Vendor Invoice" : "Upload / Enter Vendor Invoice"}</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Invoice Document (Optional)</CardTitle>
-            <CardDescription>Upload a PDF or image of the vendor invoice for record keeping.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed rounded-lg p-12 flex flex-col items-center justify-center text-center">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <div className="space-y-2">
-                <Label htmlFor="file" className="cursor-pointer">
-                  <span className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
-                    Select File
-                  </span>
-                  <Input 
-                    id="file" 
-                    type="file" 
-                    className="hidden" 
-                    accept=".pdf,.png,.jpg,.jpeg" 
-                    onChange={(e) => setFile(e.target.files?.[0] || null)} 
-                  />
-                </Label>
-                <p className="text-sm text-muted-foreground mt-4">
-                  {file ? file.name : "or drag and drop it here"}
-                </p>
+        {!isEditing && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoice Document (Optional)</CardTitle>
+              <CardDescription>Upload a PDF or image of the vendor invoice for record keeping.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed rounded-lg p-12 flex flex-col items-center justify-center text-center">
+                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                <div className="space-y-2">
+                  <Label htmlFor="file" className="cursor-pointer">
+                    <span className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                      Select File
+                    </span>
+                    <Input 
+                      id="file" 
+                      type="file" 
+                      className="hidden" 
+                      accept=".pdf,.png,.jpg,.jpeg" 
+                      onChange={(e) => setFile(e.target.files?.[0] || null)} 
+                    />
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    {file ? file.name : "or drag and drop it here"}
+                  </p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -164,7 +180,7 @@ export default function UploadVendorInvoice() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lineItems.map((item, index) => (
+                {lineItems.map((item: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell>
                       <Input 
@@ -215,7 +231,7 @@ export default function UploadVendorInvoice() {
 
         <div className="flex justify-end gap-4">
           <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
-          <Button type="submit" disabled={isLoading}>{isLoading ? "Saving..." : "Save Invoice"}</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? "Saving..." : isEditing ? "Save Changes" : "Save Invoice"}</Button>
         </div>
       </form>
     </div>

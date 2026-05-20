@@ -38,7 +38,7 @@ export default async function CustomerDetailsPage({ params }: { params: { id: st
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div>
+        <div className="flex-1">
           <h2 className="text-3xl font-bold tracking-tight">{customer.name}</h2>
           <p className="text-muted-foreground flex items-center gap-2 mt-1">
             <Badge variant={customer.status === "ACTIVE" ? "default" : "secondary"}>
@@ -47,6 +47,9 @@ export default async function CustomerDetailsPage({ params }: { params: { id: st
             Customer Details
           </p>
         </div>
+        <Button asChild>
+          <Link href={`/customers/${customer.id}/edit`}>Edit Customer</Link>
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

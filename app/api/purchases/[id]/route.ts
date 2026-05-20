@@ -8,21 +8,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const {
-      invoiceNumber,
-      issueDate,
-      dueDate,
-      clientName,
-      clientEmail,
-      clientAddress,
-      lineItems,
-      subtotal,
-      totalTax,
-      total
-    } = await req.json()
+    const { vendorId, poNumber, lineItems } = await req.json()
 
     // Verify it exists and is in DRAFT status
-    const existing = await prisma.invoice.findUnique({
+    const existing = await prisma.purchaseOrder.findUnique({
       where: {
         id: params.id,
         organizationId: session.user.organizationId
@@ -30,48 +19,44 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     })
 
     if (!existing) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
+      return NextResponse.json({ error: "Purchase Order not found" }, { status: 404 })
     }
 
     if (existing.status !== "DRAFT") {
-      return NextResponse.json({ error: "Only draft invoices can be edited" }, { status: 400 })
+      return NextResponse.json({ error: "Only draft purchase orders can be edited" }, { status: 400 })
     }
 
+    const amount = lineItems.reduce((sum: number, item: any) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0)
+
+    // Delete existing line items and recreate to handle additions/deletions easily
     const updated = await prisma.$transaction([
-      prisma.invoiceLineItem.deleteMany({
-        where: { invoiceId: params.id }
+      prisma.purchaseOrderLine.deleteMany({
+        where: { purchaseOrderId: params.id }
       }),
-      prisma.invoice.update({
+      prisma.purchaseOrder.update({
         where: { id: params.id },
         data: {
-          invoiceNumber,
-          issueDate: new Date(issueDate),
-          dueDate: new Date(dueDate),
-          clientName,
-          clientEmail,
-          clientAddress,
-          subtotal,
-          totalTax,
-          total,
+          vendorId,
+          poNumber,
+          amount,
           lineItems: {
             create: lineItems.map((item: any) => ({
               description: item.description,
               quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              taxRate: item.taxRate,
-              amount: item.amount
+              unitPrice: item.unitPrice
             }))
           }
         },
         include: {
-          lineItems: true
+          lineItems: true,
+          vendor: true
         }
       })
     ])
 
     return NextResponse.json(updated[1])
   } catch (error) {
-    console.error("Failed to update invoice:", error)
+    console.error("Failed to update purchase order:", error)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }

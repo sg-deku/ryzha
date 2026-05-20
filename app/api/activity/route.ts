@@ -15,22 +15,22 @@ export async function GET() {
     prisma.purchaseOrder.findMany({
       where: { organizationId },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 3
     }),
     prisma.salesOrder.findMany({
       where: { organizationId },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 3
     }),
     prisma.expense.findMany({
       where: { organizationId },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 3
     }),
     prisma.transaction.findMany({
       where: { organizationId },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 3
     })
   ])
 
@@ -54,21 +54,21 @@ export async function GET() {
       type: "expense",
       description: `Expense: ${exp.description}`,
       timestamp: exp.createdAt.toISOString(),
-      link: "/expenses"
+      link: `/expenses`
     })),
     ...transactions.map(tx => ({
       id: tx.id,
       type: "payment",
       description: `Transaction: ${tx.description}`,
       timestamp: tx.createdAt.toISOString(),
-      link: "/dashboard"
+      link: `/transactions/${tx.id}`
     }))
   ]
 
-  // Sort by timestamp desc and take top 10
+  // Sort by timestamp desc and take top 5
   const sortedActivities = activities
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 10)
+    .slice(0, 5)
 
   return NextResponse.json(sortedActivities)
 }

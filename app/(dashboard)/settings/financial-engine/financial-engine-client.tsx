@@ -38,6 +38,12 @@ const financialSettingsSchema = z.object({
   embeddingProvider: z.string().nullable(),
   embeddingModel: z.string().nullable(),
   expenseCategories: z.any().optional(),
+  emailProvider: z.string().nullable(),
+  emailFrom: z.string().nullable(),
+  smtpHost: z.string().nullable(),
+  smtpPort: z.number().nullable(),
+  smtpUser: z.string().nullable(),
+  smtpPass: z.string().nullable(),
 })
 
 type FinancialSettingsValues = z.infer<typeof financialSettingsSchema>
@@ -83,6 +89,12 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
       aiApiKey: "",
       embeddingProvider: "openai",
       embeddingModel: "text-embedding-3-small",
+      emailProvider: "smtp",
+      emailFrom: "billing@yourcompany.com",
+      smtpHost: "",
+      smtpPort: 587,
+      smtpUser: "",
+      smtpPass: "",
     },
   })
 
@@ -123,13 +135,14 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
       
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="ai">AI Config</TabsTrigger>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="audit">Audit</TabsTrigger>
             <TabsTrigger value="fpa">FP&A</TabsTrigger>
             <TabsTrigger value="voice-sms">Voice & SMS</TabsTrigger>
+            <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="p2p">P2P</TabsTrigger>
             <TabsTrigger value="o2c">O2C</TabsTrigger>
           </TabsList>
