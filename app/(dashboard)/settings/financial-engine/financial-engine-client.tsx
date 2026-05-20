@@ -221,7 +221,7 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                 <div className="rounded-md bg-muted/50 p-4 mb-4">
                   <h4 className="text-sm font-semibold mb-2">Using Free Models (Llama 3)</h4>
                   <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
-                    <li><strong>Groq:</strong> Select "Groq", model <code>llama3-70b-8192</code>. Fast cloud inference. Requires a free API key from Groq.</li>
+                    <li><strong>Groq:</strong> Select "Groq", model <code>llama-3.3-70b-versatile</code>. Fast cloud inference. Requires a free API key from Groq.</li>
                     <li><strong>Ollama:</strong> Select "Ollama", model <code>llama3</code>. Runs 100% locally. Requires installing Ollama and running <code>ollama run llama3</code>. No API key needed.</li>
                   </ul>
                 </div>
@@ -253,7 +253,7 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                     placeholder="e.g., gpt-4o, claude-3-5-sonnet-20240620, gemini-1.5-pro"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Specify the exact model string for the selected provider. (e.g. <code>gpt-4o-mini</code> for OpenAI, <code>llama3-70b-8192</code> for Groq, or <code>llama3</code> for Ollama).
+                    Specify the exact model string for the selected provider. (e.g. <code>gpt-4o-mini</code> for OpenAI, <code>llama-3.3-70b-versatile</code> for Groq, or <code>llama3</code> for Ollama).
                   </p>
                 </div>
                 

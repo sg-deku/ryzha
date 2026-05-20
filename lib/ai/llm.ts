@@ -14,7 +14,7 @@ function detectAvailableProvider(): string {
 
 function defaultModelForProvider(provider: string): string {
   switch (provider) {
-    case "groq": return "llama3-70b-8192"
+    case "groq": return "llama-3.3-70b-versatile"
     case "anthropic": return "claude-3-haiku-20240307"
     case "gemini": return "gemini-1.5-flash"
     default: return "gpt-4o-mini"
@@ -59,7 +59,7 @@ export async function getLLM(organizationId: string, options: any = {}) {
       })
     case "groq":
       return new ChatOpenAI({
-        modelName: model || "llama3-70b-8192",
+        modelName: model || "llama-3.3-70b-versatile",
         temperature: options.temperature ?? 0.2,
         openAIApiKey: requireKey("GROQ_API_KEY", "Groq"),
         configuration: {

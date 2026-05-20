@@ -18,7 +18,7 @@ function envKeyForProvider(provider: string): string | undefined {
 
 function defaultModel(provider: string): string {
   switch (provider) {
-    case "groq": return "llama3-70b-8192"
+    case "groq": return "llama-3.3-70b-versatile"
     case "anthropic": return "claude-3-haiku-20240307"
     default: return "gpt-4o-mini"
   }
