@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { ArrowRight, BarChart3, ShieldCheck, Zap } from "lucide-react"
+import { ArrowRight, BarChart3, ShieldCheck, Zap, Workflow, MessageSquareText, ArrowLeftRight, Tag, FilePenLine, BellRing } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
@@ -52,32 +52,59 @@ export default async function LandingPage() {
       {/* Features Section */}
       <section className="w-full py-20 bg-muted/50">
         <div className="container px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="flex flex-col items-center text-center space-y-4 p-6 bg-background rounded-xl shadow-sm border animate-fade-up" style={{ animationDelay: "0.1s" }}>
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <Zap className="h-6 w-6" />
+                <Workflow className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-bold">Real-time Insights</h3>
+              <h3 className="text-xl font-bold">Autonomous Workflows</h3>
               <p className="text-muted-foreground">
-                Get instant visibility into your cash flow and spending as it happens.
+                Visual AI agents that automatically handle your Procure-to-Pay and Order-to-Cash pipelines from end to end.
               </p>
             </div>
             <div className="flex flex-col items-center text-center space-y-4 p-6 bg-background rounded-xl shadow-sm border animate-fade-up" style={{ animationDelay: "0.2s" }}>
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <ShieldCheck className="h-6 w-6" />
+                <MessageSquareText className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-bold">Automated Audit</h3>
+              <h3 className="text-xl font-bold">Natural Language Reporting</h3>
               <p className="text-muted-foreground">
-                Every transaction is verified and hashed for bulletproof audit trails.
+                Stop wrestling with spreadsheets. Ask complex financial questions in plain English and get instant, data-backed narratives.
               </p>
             </div>
             <div className="flex flex-col items-center text-center space-y-4 p-6 bg-background rounded-xl shadow-sm border animate-fade-up" style={{ animationDelay: "0.3s" }}>
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <BarChart3 className="h-6 w-6" />
+                <ArrowLeftRight className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-bold">Runway Forecast</h3>
+              <h3 className="text-xl font-bold">Continuous Reconciliation</h3>
               <p className="text-muted-foreground">
-                Predict your future cash position with AI-driven runway analysis.
+                Connect Stripe and let Ryzha automatically recognize revenue, calculate deferred schedules, and match every transaction.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-background rounded-xl shadow-sm border animate-fade-up" style={{ animationDelay: "0.4s" }}>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Tag className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold">Smart Expense Categorization</h3>
+              <p className="text-muted-foreground">
+                AI automatically categorizes expenses, flags anomalies, and disputes invoice mismatches before they cost you money.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-background rounded-xl shadow-sm border animate-fade-up" style={{ animationDelay: "0.5s" }}>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <FilePenLine className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold">Contract & Revenue Management</h3>
+              <p className="text-muted-foreground">
+                Track deferred vs. recognized revenue effortlessly with built-in subscription and contract management.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-background rounded-xl shadow-sm border animate-fade-up" style={{ animationDelay: "0.6s" }}>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <BellRing className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold">Proactive Risk Alerts</h3>
+              <p className="text-muted-foreground">
+                Stay ahead of the curve with AI-driven churn risk predictions and automated overdue invoice warnings.
               </p>
             </div>
           </div>
