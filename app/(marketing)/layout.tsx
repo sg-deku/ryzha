@@ -36,6 +36,9 @@ export default function MarketingLayout({
             © {new Date().getFullYear()} Ryzha. All rights reserved.
           </p>
           <div className="flex gap-4">
+            <Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              About Us
+            </Link>
             <Link href="/api-docs" className="text-sm text-muted-foreground hover:text-primary transition-colors">
               API Documentation
             </Link>
