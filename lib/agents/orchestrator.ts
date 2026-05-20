@@ -53,66 +53,97 @@ export async function startAgentWorkflow(transactionId: string) {
       })
     }
 
-    // Step 1: R2R
-    await logAndPublish("Orchestrator", "Starting R2R Agent...")
-    const r2rResult = await runR2RAgent(transactionId)
-    if (!r2rResult) throw new Error("R2R failed")
-    await logAndPublish("R2R", "Initial revenue recorded.")
+    await logAndPublish("Orchestrator", `Workflow started | Transaction ID: ${transactionId} | Payment Intent: ${transaction.stripePaymentIntentId} | Customer: ${transaction.customerEmail ?? "unknown"} | Amount: $${transaction.amount}`)
 
-    // Step 2: O&M (only if product is annual subscription)
-    await logAndPublish("Orchestrator", "Starting O&M Agent...")
-    const afterOM = await runOMAgent(transactionId)
-    if (!afterOM) throw new Error("O&M failed")
-    await logAndPublish("O&M", "Revenue recognition policy applied.")
+    // Step 1: R2R
+    await logAndPublish("Orchestrator", `[1/4] Starting R2R Agent — recording revenue of $${transaction.amount}...`)
+    let r2rResult
+    try {
+      r2rResult = await runR2RAgent(transactionId)
+      if (!r2rResult) throw new Error("returned null")
+    } catch (err: any) {
+      await logAndPublish("R2R", `FAILED — ${err.message}`)
+      throw new Error(`R2R Agent failed: ${err.message}`)
+    }
+    await logAndPublish("R2R", `Revenue of $${transaction.amount} recorded. Recognition type: ${r2rResult.revenueRecognitionType ?? "immediate"}.`)
+
+    // Step 2: O&M
+    await logAndPublish("Orchestrator", `[2/4] Starting O&M Agent — applying ASC 606 revenue recognition policy...`)
+    let afterOM
+    try {
+      afterOM = await runOMAgent(transactionId)
+      if (!afterOM) throw new Error("returned null")
+    } catch (err: any) {
+      await logAndPublish("O&M", `FAILED — ${err.message}`)
+      throw new Error(`O&M Agent failed: ${err.message}`)
+    }
+    const recognized = (afterOM as any).recognizedRevenue ?? transaction.amount
+    const deferred = (afterOM as any).deferredRevenue ?? 0
+    await logAndPublish("O&M", `Policy applied. Recognized: $${recognized}${deferred > 0 ? ` | Deferred: $${deferred} over contract period` : " (immediate)"}.`)
 
     // Step 3: Auditor
-    await logAndPublish("Orchestrator", "Starting Auditor Agent...")
-    const afterAuditor = await runAuditorAgent(transactionId)
-    if (!afterAuditor || afterAuditor.auditStatus !== "verified") {
-      const msg = afterAuditor?.auditStatus === "failed" ? "Verification failed" : "Audit error"
-      await logAndPublish("Auditor", msg)
-      
-      await prisma.transaction.update({
-        where: { id: transactionId },
-        data: { workflowStatus: "error" }
-      })
+    await logAndPublish("Orchestrator", `[3/4] Starting Auditor Agent — verifying contract for Payment Intent ${transaction.stripePaymentIntentId}...`)
+    let afterAuditor
+    try {
+      afterAuditor = await runAuditorAgent(transactionId)
+    } catch (err: any) {
+      await logAndPublish("Auditor", `FAILED — unexpected error: ${err.message}`)
+      await prisma.transaction.update({ where: { id: transactionId }, data: { workflowStatus: "error" } })
       return
     }
-    await logAndPublish("Auditor", "Audit hash verified and sealed.")
+
+    if (!afterAuditor || afterAuditor.auditStatus !== "verified") {
+      const status = afterAuditor?.auditStatus ?? "unknown"
+      await logAndPublish("Auditor", `FAILED — audit status: ${status}. No signed contract found matching Payment Intent ${transaction.stripePaymentIntentId}. Create a contract record under Contracts and re-run.`)
+      await prisma.transaction.update({ where: { id: transactionId }, data: { workflowStatus: "error" } })
+      return
+    }
+    await logAndPublish("Auditor", `Verified. Audit hash: ${afterAuditor.auditHash ?? "n/a"}. Contract matched for ${transaction.customerEmail}.`)
 
     // Step 4: FP&A
-    await logAndPublish("Orchestrator", "Starting FP&A Agent...")
-    const fpResult = await runFPAgent(transactionId)
-    if (!fpResult) throw new Error("FP&A failed")
-    await logAndPublish("FP&A", "Financial model and runway updated.")
+    await logAndPublish("Orchestrator", `[4/4] Starting FP&A Agent — recalculating runway and financial model...`)
+    let fpResult
+    try {
+      fpResult = await runFPAgent(transactionId)
+      if (!fpResult) throw new Error("returned null")
+    } catch (err: any) {
+      await logAndPublish("FP&A", `FAILED — ${err.message}`)
+      throw new Error(`FP&A Agent failed: ${err.message}`)
+    }
+    const runway = (fpResult as any).runwayMonths
+    const zeroCash = (fpResult as any).zeroCashDate
+    await logAndPublish("FP&A", `Financial model updated. Runway: ${runway ?? "—"} months | Zero cash date: ${zeroCash ?? "—"}.`)
 
-    // Final: Voice & SMS
-    await logAndPublish("Orchestrator", "Sending notifications...")
+    // Final
+    await logAndPublish("Orchestrator", `All agents completed. Sending notifications...`)
     await sendVoiceSummary(transactionId)
     await sendSMSNotification(transactionId)
 
     await prisma.transaction.update({
       where: { id: transactionId },
-      data: { workflowStatus: "completed" }
+      data: { workflowStatus: "completed" },
     })
-    
+
+    await logAndPublish("Orchestrator", `Workflow COMPLETED | Transaction ID: ${transactionId} | $${transaction.amount} from ${transaction.customerEmail ?? "unknown"} fully processed.`)
+
     await publishEvent(`org:${orgId}:events`, {
       type: "workflow_completed",
       transactionId,
-      timestamp: new Date()
+      timestamp: new Date(),
     })
 
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : "Unknown error"
     console.error("Workflow error:", error)
     await prisma.transaction.update({
       where: { id: transactionId },
-      data: { workflowStatus: "error" }
+      data: { workflowStatus: "error" },
     })
     await publishEvent(`org:${orgId}:events`, {
       type: "workflow_error",
       transactionId,
-      error: error instanceof Error ? error.message : "Unknown error",
-      timestamp: new Date()
+      error: errMsg,
+      timestamp: new Date(),
     })
   }
 }
@@ -120,40 +151,70 @@ export async function startAgentWorkflow(transactionId: string) {
 export async function startP2PWorkflow(vendorInvoiceId: string) {
   const invoice = await prisma.vendorInvoice.findUnique({
     where: { id: vendorInvoiceId },
-    include: { organization: true }
+    include: { organization: true, vendor: true, purchaseOrder: true }
   })
   if (!invoice) return
 
+  const orgId = invoice.organizationId
+
+  const appendP2PLog = async (agent: string, message: string) => {
+    const logEntry = { agent, message, timestamp: new Date().toISOString() }
+    const current = await prisma.vendorInvoice.findUnique({ where: { id: vendorInvoiceId }, select: { agentLogs: true } })
+    const existing = Array.isArray(current?.agentLogs) ? (current.agentLogs as any[]) : []
+    await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { agentLogs: [...existing, logEntry] } })
+    await publishEvent(`org:${orgId}:events`, { type: "agent_log", transactionId: vendorInvoiceId, ...logEntry })
+  }
+
   try {
-    const orgId = invoice.organizationId
-    
-    // Step 1: Matching
-    const matchingResult = await runMatchingAgent(vendorInvoiceId)
+    await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { workflowStatus: "running", agentLogs: [] } })
+
+    await appendP2PLog("Orchestrator", `P2P Workflow started | Invoice ID: ${vendorInvoiceId} | Invoice #: ${invoice.invoiceNumber} | Vendor: ${invoice.vendor?.name ?? "unknown"} | Amount: $${invoice.amount} | PO: ${invoice.purchaseOrder?.poNumber ?? "none"} | Due: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "n/a"}`)
+    await appendP2PLog("Orchestrator", `[1/2] Starting Matching Agent — comparing invoice against PO...`)
+
+    let matchingResult
+    try {
+      matchingResult = await runMatchingAgent(vendorInvoiceId)
+    } catch (err: any) {
+      await appendP2PLog("Matching", `FAILED — ${err.message}`)
+      await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { workflowStatus: "error" } })
+      throw err
+    }
+
     const updated = matchingResult?.updated || invoice
-    const logMessage = matchingResult?.logMessage || "Matching failed"
-    
-    // Step 2: If matched and approved, create Expense
+    const matchLog = matchingResult?.logMessage || "Matching result unknown"
+    await appendP2PLog("Matching", `${matchLog} | Final status: ${updated.status}`)
+    await appendP2PLog("Orchestrator", `[2/2] Processing matched invoice — creating expense record...`)
+
     if (updated.status === "MATCHED") {
-      await prisma.expense.create({
+      const expense = await prisma.expense.create({
         data: {
           date: new Date(),
           description: `Vendor Invoice: ${updated.invoiceNumber}`,
           amount: updated.amount,
           category: "Accounts Payable",
           organizationId: orgId,
-          status: "REVIEWED"
-        }
+          status: "REVIEWED",
+        },
       })
+      await appendP2PLog("Orchestrator", `Expense record created | Expense ID: ${expense.id} | Amount: $${expense.amount} | Category: ${expense.category}`)
+      await appendP2PLog("Orchestrator", `P2P Workflow COMPLETED | Invoice #${updated.invoiceNumber} from ${invoice.vendor?.name ?? "vendor"} approved and expensed.`)
+      await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { workflowStatus: "completed" } })
+    } else {
+      await appendP2PLog("Orchestrator", `P2P Workflow STOPPED | Invoice #${updated.invoiceNumber} status is "${updated.status}". Manual review required before expense is created.`)
+      await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { workflowStatus: "error" } })
     }
 
     await publishEvent(`org:${orgId}:events`, {
       type: "p2p_workflow_log",
       vendorInvoiceId,
-      message: logMessage,
-      timestamp: new Date()
+      message: matchLog,
+      status: updated.status,
+      timestamp: new Date(),
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("P2P Workflow error:", error)
+    await appendP2PLog("Orchestrator", `P2P Workflow ERROR | Invoice ID: ${vendorInvoiceId} | ${error.message}`)
+    await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { workflowStatus: "error" } }).catch(() => {})
   }
 }
 
@@ -164,47 +225,65 @@ export async function startO2CWorkflow(salesOrderId: string) {
   })
   if (!order) return
 
-  try {
-    const orgId = order.organizationId
+  const orgId = order.organizationId
 
-    // Step 1: Logic for O2C (e.g. invoicing, collections check)
+  const appendO2CLog = async (agent: string, message: string) => {
+    const logEntry = { agent, message, timestamp: new Date().toISOString() }
+    const current = await prisma.salesOrder.findUnique({ where: { id: salesOrderId }, select: { agentLogs: true } })
+    const existing = Array.isArray(current?.agentLogs) ? (current.agentLogs as any[]) : []
+    await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { agentLogs: [...existing, logEntry] } })
+    await publishEvent(`org:${orgId}:events`, { type: "agent_log", transactionId: salesOrderId, ...logEntry })
+  }
+
+  try {
+    await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "running", agentLogs: [] } })
+
+    await appendO2CLog("Orchestrator", `O2C Workflow started | Sales Order ID: ${salesOrderId} | Order #: ${order.orderNumber} | Customer: ${order.customer.name} (${order.customer.email ?? "no email"}) | Amount: $${order.totalAmount} | Status: ${order.status}`)
+
     if (order.status === "PAID") {
-      const intentId = `o2c-${order.orderNumber}-${Date.now()}`;
-      
-      // Mock contract so Auditor agent passes
-      await prisma.contract.create({
+      await appendO2CLog("Orchestrator", `[1/2] Order is PAID — creating synthetic contract + transaction for agent pipeline...`)
+
+      const intentId = `o2c-${order.orderNumber}-${Date.now()}`
+
+      const contract = await prisma.contract.create({
         data: {
           stripePaymentIntentId: intentId,
           customerEmail: order.customer.email || "customer@example.com",
           amount: order.totalAmount,
           status: "signed",
-          organizationId: orgId
-        }
-      });
+          organizationId: orgId,
+        },
+      })
+      await appendO2CLog("Orchestrator", `Contract auto-created | Contract ID: ${contract.id} | Customer: ${order.customer.email} | Intent: ${intentId}`)
 
-      // Create a transaction to trigger the main agent workflow
       const transaction = await prisma.transaction.create({
         data: {
           stripePaymentIntentId: intentId,
           amount: order.totalAmount,
-          description: `Sales Order Payment: ${order.orderNumber} - ${order.customer.name}`,
+          description: `Sales Order Payment: ${order.orderNumber} — ${order.customer.name}`,
           customerEmail: order.customer.email,
           organizationId: orgId,
-          agentLogs: []
-        }
+          agentLogs: [],
+        },
       })
+      await appendO2CLog("Orchestrator", `[2/2] Transaction created | Transaction ID: ${transaction.id} | Handing off to R2R → O&M → Auditor → FP&A pipeline...`)
+      await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "completed" } })
 
-      // Start the main financial brain agents (R2R, O&M, Auditor, FP&A)
       await startAgentWorkflow(transaction.id)
+    } else {
+      await appendO2CLog("Orchestrator", `O2C Workflow SKIPPED | Order #${order.orderNumber} is in status "${order.status}" — agent pipeline only runs on PAID orders. Update the order to PAID to proceed.`)
+      await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "error" } })
     }
 
     await publishEvent(`org:${orgId}:events`, {
       type: "o2c_workflow_log",
       salesOrderId,
       message: `O2C: Processed order ${order.orderNumber}. Status: ${order.status}`,
-      timestamp: new Date()
+      timestamp: new Date(),
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("O2C Workflow error:", error)
+    await appendO2CLog("Orchestrator", `O2C Workflow ERROR | Order ID: ${salesOrderId} | Order #: ${order.orderNumber} | ${error.message}`)
+    await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "error" } }).catch(() => {})
   }
 }

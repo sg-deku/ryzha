@@ -43,10 +43,15 @@ export async function GET(req: Request) {
   });
 
   if (vendorInvoice && vendorInvoice.organizationId === orgId) {
-    return NextResponse.json({ 
-      logs: [`[P2P] Invoice ${vendorInvoice.invoiceNumber} processed. Status: ${vendorInvoice.status}`], 
-      status: vendorInvoice.status === "MATCHED" || vendorInvoice.status === "PAID" ? "completed" : "running" 
-    });
+    let logs: string[] = []
+    if (Array.isArray(vendorInvoice.agentLogs)) {
+      logs = (vendorInvoice.agentLogs as any[]).map((log: any) => `[${log.agent}] ${log.message}`)
+    }
+    const wfStatus = vendorInvoice.workflowStatus
+    return NextResponse.json({
+      logs,
+      status: wfStatus === "completed" ? "completed" : wfStatus === "error" ? "error" : "running",
+    })
   }
 
   // 3. Check SalesOrder (O2C flow)
@@ -55,10 +60,15 @@ export async function GET(req: Request) {
   });
 
   if (salesOrder && salesOrder.organizationId === orgId) {
-    return NextResponse.json({ 
-      logs: [`[O2C] Sales Order ${salesOrder.orderNumber} processed. Status: ${salesOrder.status}`], 
-      status: salesOrder.status === "PAID" ? "completed" : "running" 
-    });
+    let logs: string[] = []
+    if (Array.isArray(salesOrder.agentLogs)) {
+      logs = (salesOrder.agentLogs as any[]).map((log: any) => `[${log.agent}] ${log.message}`)
+    }
+    const wfStatus = salesOrder.workflowStatus
+    return NextResponse.json({
+      logs,
+      status: wfStatus === "completed" ? "completed" : wfStatus === "error" ? "error" : "running",
+    })
   }
 
   return NextResponse.json({ logs: [], status: "idle" });
