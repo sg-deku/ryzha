@@ -4,35 +4,64 @@ import { ChatAnthropic } from "@langchain/anthropic"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { ChatOllama } from "@langchain/ollama"
 
+function detectAvailableProvider(): string {
+  if (process.env.OPENAI_API_KEY) return "openai"
+  if (process.env.GROQ_API_KEY) return "groq"
+  if (process.env.ANTHROPIC_API_KEY) return "anthropic"
+  if (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY) return "gemini"
+  return "openai"
+}
+
+function defaultModelForProvider(provider: string): string {
+  switch (provider) {
+    case "groq": return "llama-3.3-70b-versatile"
+    case "anthropic": return "claude-3-haiku-20240307"
+    case "gemini": return "gemini-1.5-flash"
+    default: return "gpt-4o-mini"
+  }
+}
+
 export async function getLLM(organizationId: string, options: any = {}) {
   const settings = await prisma.financialSettings.findUnique({
     where: { organizationId },
   })
 
-  const provider = settings?.aiProvider || "openai"
-  const model = settings?.aiModel || "gpt-4o-mini"
-  const apiKey = settings?.aiApiKey || undefined // Use default env var if undefined
+  const provider = settings?.aiProvider || detectAvailableProvider()
+  const model = settings?.aiModel || defaultModelForProvider(provider)
+  const dbKey = settings?.aiApiKey && settings.aiApiKey.trim() !== "" ? settings.aiApiKey : undefined
+
+  function requireKey(envVar: string, providerName: string): string {
+    const key = dbKey || process.env[envVar]
+    if (!key) {
+      throw new Error(
+        `No API key found for ${providerName}. ` +
+        `Go to Settings → Financial Engine → AI Config and enter your ${providerName} API key, ` +
+        `or set the ${envVar} environment variable.`
+      )
+    }
+    return key
+  }
 
   switch (provider) {
     case "anthropic":
       return new ChatAnthropic({
         modelName: model,
         temperature: options.temperature ?? 0.2,
-        anthropicApiKey: apiKey,
+        anthropicApiKey: requireKey("ANTHROPIC_API_KEY", "Anthropic"),
         ...options,
       })
     case "gemini":
       return new ChatGoogleGenerativeAI({
         modelName: model,
         temperature: options.temperature ?? 0.2,
-        apiKey: apiKey,
+        apiKey: requireKey("GOOGLE_API_KEY", "Google Gemini"),
         ...options,
       })
     case "groq":
       return new ChatOpenAI({
-        modelName: model || "llama3-70b-8192", 
+        modelName: model || "llama-3.3-70b-versatile",
         temperature: options.temperature ?? 0.2,
-        openAIApiKey: apiKey || process.env.GROQ_API_KEY,
+        openAIApiKey: requireKey("GROQ_API_KEY", "Groq"),
         configuration: {
           baseURL: "https://api.groq.com/openai/v1",
         },
@@ -40,7 +69,7 @@ export async function getLLM(organizationId: string, options: any = {}) {
       })
     case "ollama":
       return new ChatOllama({
-        baseUrl: "http://localhost:11434", // Default Ollama local URL
+        baseUrl: "http://localhost:11434",
         model: model || "llama3",
         temperature: options.temperature ?? 0.2,
         ...options,
@@ -50,7 +79,7 @@ export async function getLLM(organizationId: string, options: any = {}) {
       return new ChatOpenAI({
         modelName: model,
         temperature: options.temperature ?? 0.2,
-        openAIApiKey: apiKey,
+        openAIApiKey: requireKey("OPENAI_API_KEY", "OpenAI"),
         ...options,
       })
   }
