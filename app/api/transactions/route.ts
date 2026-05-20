@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const transactions = await prisma.transaction.findMany({
       where: { organizationId: orgId },
       orderBy: { createdAt: "desc" },
-      take: 10
+      take: 5
     })
 
     return NextResponse.json(transactions)

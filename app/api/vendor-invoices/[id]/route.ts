@@ -8,21 +8,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const {
-      invoiceNumber,
-      issueDate,
-      dueDate,
-      clientName,
-      clientEmail,
-      clientAddress,
-      lineItems,
-      subtotal,
-      totalTax,
-      total
-    } = await req.json()
+    const { vendorId, invoiceNumber, purchaseOrderId, lineItems } = await req.json()
 
-    // Verify it exists and is in DRAFT status
-    const existing = await prisma.invoice.findUnique({
+    // Verify it exists and is in PENDING status
+    const existing = await prisma.vendorInvoice.findUnique({
       where: {
         id: params.id,
         organizationId: session.user.organizationId
@@ -30,48 +19,45 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     })
 
     if (!existing) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
+      return NextResponse.json({ error: "Vendor Invoice not found" }, { status: 404 })
     }
 
-    if (existing.status !== "DRAFT") {
-      return NextResponse.json({ error: "Only draft invoices can be edited" }, { status: 400 })
+    if (existing.status !== "PENDING") {
+      return NextResponse.json({ error: "Only pending vendor invoices can be edited" }, { status: 400 })
     }
 
+    const amount = lineItems.reduce((sum: number, item: any) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0)
+
+    // Delete existing line items and recreate to handle additions/deletions easily
     const updated = await prisma.$transaction([
-      prisma.invoiceLineItem.deleteMany({
-        where: { invoiceId: params.id }
+      prisma.vendorInvoiceLine.deleteMany({
+        where: { vendorInvoiceId: params.id }
       }),
-      prisma.invoice.update({
+      prisma.vendorInvoice.update({
         where: { id: params.id },
         data: {
+          vendorId,
           invoiceNumber,
-          issueDate: new Date(issueDate),
-          dueDate: new Date(dueDate),
-          clientName,
-          clientEmail,
-          clientAddress,
-          subtotal,
-          totalTax,
-          total,
+          purchaseOrderId,
+          amount,
           lineItems: {
             create: lineItems.map((item: any) => ({
               description: item.description,
               quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              taxRate: item.taxRate,
-              amount: item.amount
+              unitPrice: item.unitPrice
             }))
           }
         },
         include: {
-          lineItems: true
+          lineItems: true,
+          vendor: true
         }
       })
     ])
 
     return NextResponse.json(updated[1])
   } catch (error) {
-    console.error("Failed to update invoice:", error)
+    console.error("Failed to update vendor invoice:", error)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }

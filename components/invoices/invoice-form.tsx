@@ -23,23 +23,29 @@ interface LineItem {
   isNew?: boolean
 }
 
-export function InvoiceForm() {
+export function InvoiceForm({ initialData }: { initialData?: any }) {
   const router = useRouter()
-  const [invoiceNumber, setInvoiceNumber] = useState("")
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split("T")[0])
-  const [dueDate, setDueDate] = useState("")
-  const [clientName, setClientName] = useState("")
-  const [clientEmail, setClientEmail] = useState("")
-  const [clientCountry, setClientCountry] = useState("")
+  const isEditing = !!initialData?.id
+  const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoiceNumber || "")
+  const [issueDate, setIssueDate] = useState(initialData?.issueDate ? new Date(initialData.issueDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0])
+  const [dueDate, setDueDate] = useState(initialData?.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : "")
+  const [clientName, setClientName] = useState(initialData?.clientName || "")
+  const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || "")
+  const [clientCountry, setClientCountry] = useState(initialData?.clientAddress?.country || "")
   const [productCategory, setProductCategory] = useState("Software & SaaS")
-  const [clientAddress, setClientAddress] = useState("")
+  const [clientAddress, setClientAddress] = useState(initialData?.clientAddress?.raw || "")
   const [defaultTaxRate, setDefaultTaxRate] = useState(0)
-  const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: "1", description: "", quantity: 1, unitPrice: 0, taxRate: 0, amount: 0 }
-  ])
-  const [subtotal, setSubtotal] = useState(0)
-  const [totalTax, setTotalTax] = useState(0)
-  const [total, setTotal] = useState(0)
+  const [lineItems, setLineItems] = useState<LineItem[]>(
+    initialData?.lineItems?.length > 0
+      ? initialData.lineItems.map((item: any) => ({
+          ...item,
+          id: item.id || Math.random().toString(36).substr(2, 9)
+        }))
+      : [{ id: "1", description: "", quantity: 1, unitPrice: 0, taxRate: 0, amount: 0 }]
+  )
+  const [subtotal, setSubtotal] = useState(initialData?.subtotal || 0)
+  const [totalTax, setTotalTax] = useState(initialData?.totalTax || 0)
+  const [total, setTotal] = useState(initialData?.total || 0)
   const [isSaving, setIsSaving] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -52,6 +58,7 @@ export function InvoiceForm() {
   }, [lineItems])
 
   useEffect(() => {
+    if (isEditing) return
     fetch("/api/invoices")
       .then(res => res.json())
       .then(data => {
@@ -60,7 +67,7 @@ export function InvoiceForm() {
         // Apply default tax rate to existing items
         setLineItems(prev => prev.map(item => ({ ...item, taxRate: data.defaultTaxRate })))
       })
-  }, [])
+  }, [isEditing])
 
   useEffect(() => {
     let sub = 0
@@ -134,8 +141,11 @@ export function InvoiceForm() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const res = await fetch("/api/invoices", {
-        method: "POST",
+      const url = isEditing ? `/api/invoices/${initialData.id}` : "/api/invoices"
+      const method = isEditing ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           invoiceNumber,
@@ -143,7 +153,7 @@ export function InvoiceForm() {
           dueDate,
           clientName,
           clientEmail,
-          clientAddress: { raw: clientAddress },
+          clientAddress: { raw: clientAddress, country: clientCountry },
           lineItems,
           subtotal,
           totalTax,
@@ -152,10 +162,10 @@ export function InvoiceForm() {
       })
 
       if (res.ok) {
-        toast.success("Invoice saved as draft")
+        toast.success(isEditing ? "Invoice updated" : "Invoice saved as draft")
         router.push("/invoices")
       } else {
-        toast.error("Failed to save invoice")
+        toast.error(isEditing ? "Failed to update invoice" : "Failed to save invoice")
       }
     } catch (err) {
       toast.error("An error occurred while saving")
@@ -167,9 +177,12 @@ export function InvoiceForm() {
   const handleSaveAndGenerate = async () => {
     setIsGenerating(true)
     try {
+      const url = isEditing ? `/api/invoices/${initialData.id}` : "/api/invoices"
+      const method = isEditing ? "PUT" : "POST"
+
       // First save the invoice
-      const res = await fetch("/api/invoices", {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           invoiceNumber,
@@ -177,7 +190,7 @@ export function InvoiceForm() {
           dueDate,
           clientName,
           clientEmail,
-          clientAddress: { raw: clientAddress },
+          clientAddress: { raw: clientAddress, country: clientCountry },
           lineItems,
           subtotal,
           totalTax,

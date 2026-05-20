@@ -204,6 +204,15 @@ model FinancialSettings {
   embeddingProvider            String?  @default("openai")
   embeddingModel               String?  @default("text-embedding-3-small")
   expenseCategories            Json?    @default("[\"Software\", \"Hardware\", \"Office Supplies\", \"Travel\", \"Meals\", \"Legal\", \"Marketing\", \"Other\"]")
+  
+  // Email Settings
+  emailProvider                String?  @default("smtp") // smtp, sendgrid, resend
+  emailFrom                    String?  @default("billing@yourcompany.com")
+  smtpHost                     String?
+  smtpPort                     Int?
+  smtpUser                     String?
+  smtpPass                     String?
+
   updatedAt                    DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])

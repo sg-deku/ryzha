@@ -12,15 +12,18 @@ import { Plus, Trash2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
-export default function NewSalesOrder() {
+export default function SalesOrderForm({ initialData }: { initialData?: any }) {
   const router = useRouter()
-  const [customerId, setCustomerId] = useState("")
+  const isEditing = !!initialData?.id
+  const [customerId, setCustomerId] = useState(initialData?.customerId || "")
   const [customers, setCustomers] = useState<any[]>([])
-  const [orderNumber, setOrderNumber] = useState(`SO-${Date.now().toString().slice(-6)}`)
+  const [orderNumber, setOrderNumber] = useState(initialData?.orderNumber || `SO-${Date.now().toString().slice(-6)}`)
   const [isLoading, setIsLoading] = useState(false)
-  const [lineItems, setLineItems] = useState([
-    { description: "", quantity: 1, unitPrice: 0 }
-  ])
+  const [lineItems, setLineItems] = useState(
+    initialData?.lineItems?.length > 0 
+      ? initialData.lineItems 
+      : [{ description: "", quantity: 1, unitPrice: 0 }]
+  )
 
   useEffect(() => {
     fetch("/api/customers")
@@ -36,7 +39,7 @@ export default function NewSalesOrder() {
   }
 
   const removeLineItem = (index: number) => {
-    setLineItems(lineItems.filter((_, i) => i !== index))
+    setLineItems(lineItems.filter((_: any, i: number) => i !== index))
   }
 
   const updateLineItem = (index: number, field: string, value: any) => {
@@ -45,26 +48,37 @@ export default function NewSalesOrder() {
     setLineItems(newItems)
   }
 
-  const total = lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
+  const total = lineItems.reduce((sum: number, item: any) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     
     try {
-      const res = await fetch("/api/sales-orders", {
-        method: "POST",
+      const url = isEditing ? `/api/sales-orders/${initialData.id}` : "/api/sales-orders"
+      const method = isEditing ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, orderNumber, lineItems })
+        body: JSON.stringify({ 
+          customerId, 
+          orderNumber, 
+          lineItems: lineItems.map((item: any) => ({
+            ...item,
+            quantity: Number(item.quantity),
+            unitPrice: Number(item.unitPrice)
+          })) 
+        })
       })
 
-      if (!res.ok) throw new Error("Failed to create sales order")
+      if (!res.ok) throw new Error(isEditing ? "Failed to update sales order" : "Failed to create sales order")
 
-      toast.success("Sales Order created successfully")
+      toast.success(isEditing ? "Sales Order updated successfully" : "Sales Order created successfully")
       router.push("/sales-orders")
       router.refresh()
     } catch (err) {
-      toast.error("Failed to create sales order")
+      toast.error(isEditing ? "Failed to update sales order" : "Failed to create sales order")
     } finally {
       setIsLoading(false)
     }
@@ -78,7 +92,7 @@ export default function NewSalesOrder() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h2 className="text-3xl font-bold tracking-tight">New Sales Order</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{isEditing ? "Edit Sales Order" : "New Sales Order"}</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -128,7 +142,7 @@ export default function NewSalesOrder() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lineItems.map((item, index) => (
+                {lineItems.map((item: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell>
                       <Input 
@@ -181,7 +195,7 @@ export default function NewSalesOrder() {
 
         <div className="flex justify-end gap-4">
           <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
-          <Button type="submit" disabled={isLoading}>{isLoading ? "Creating..." : "Create Sales Order"}</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? "Saving..." : isEditing ? "Save Changes" : "Create Sales Order"}</Button>
         </div>
       </form>
     </div>

@@ -154,7 +154,11 @@ export function InvoiceDetail({ invoice: initialInvoice }: { invoice: Invoice })
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push(`/invoices/edit/${invoice.id}`)}>Edit Invoice</DropdownMenuItem>
+              {invoice.status === 'DRAFT' && (
+                <DropdownMenuItem onClick={() => router.push(`/invoices/${invoice.id}/edit`)}>
+                  Edit Invoice
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleMarkAsPaid} disabled={isUpdating || invoice.status === 'PAID'}>
                 Mark as Paid
               </DropdownMenuItem>

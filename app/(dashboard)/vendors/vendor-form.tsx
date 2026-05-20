@@ -10,31 +10,35 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
-export default function NewVendor() {
+export default function VendorForm({ initialData }: { initialData?: any }) {
   const router = useRouter()
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [taxId, setTaxId] = useState("")
-  const [paymentTerms, setPaymentTerms] = useState("NET30")
+  const isEditing = !!initialData?.id
+  const [name, setName] = useState(initialData?.name || "")
+  const [email, setEmail] = useState(initialData?.email || "")
+  const [taxId, setTaxId] = useState(initialData?.taxId || "")
+  const [paymentTerms, setPaymentTerms] = useState(initialData?.paymentTerms || "NET30")
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const res = await fetch("/api/vendors", {
-        method: "POST",
+      const url = isEditing ? `/api/vendors/${initialData.id}` : "/api/vendors"
+      const method = isEditing ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, taxId, paymentTerms })
       })
 
-      if (!res.ok) throw new Error("Failed to create vendor")
+      if (!res.ok) throw new Error(isEditing ? "Failed to update vendor" : "Failed to create vendor")
 
-      toast.success("Vendor created successfully")
+      toast.success(isEditing ? "Vendor updated successfully" : "Vendor created successfully")
       router.push("/vendors")
       router.refresh()
     } catch (err) {
-      toast.error("Failed to create vendor")
+      toast.error(isEditing ? "Failed to update vendor" : "Failed to create vendor")
     } finally {
       setIsLoading(false)
     }
@@ -48,7 +52,7 @@ export default function NewVendor() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h2 className="text-3xl font-bold tracking-tight">Add Vendor</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{isEditing ? "Edit Vendor" : "Add Vendor"}</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8 max-w-2xl">
@@ -78,7 +82,7 @@ export default function NewVendor() {
 
         <div className="flex justify-end gap-4">
           <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
-          <Button type="submit" disabled={isLoading}>{isLoading ? "Creating..." : "Create Vendor"}</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? "Saving..." : isEditing ? "Save Changes" : "Create Vendor"}</Button>
         </div>
       </form>
     </div>

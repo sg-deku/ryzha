@@ -1,7 +1,7 @@
-import NewVendor from "./page-client"
+import VendorForm from "../vendor-form"
 
 export const dynamic = "force-dynamic"
 
 export default function Page() {
-  return <NewVendor />
+  return <VendorForm />
 }

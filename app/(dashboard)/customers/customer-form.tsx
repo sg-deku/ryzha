@@ -10,15 +10,16 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
-export default function NewCustomer() {
+export default function CustomerForm({ initialData }: { initialData?: any }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const isEditing = !!initialData?.id
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    taxId: "",
-    creditLimit: 5000,
-    status: "ACTIVE"
+    name: initialData?.name || "",
+    email: initialData?.email || "",
+    taxId: initialData?.taxId || "",
+    creditLimit: initialData?.creditLimit || 5000,
+    status: initialData?.status || "ACTIVE"
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,8 +27,11 @@ export default function NewCustomer() {
     setIsLoading(true)
     
     try {
-      const response = await fetch("/api/customers", {
-        method: "POST",
+      const url = isEditing ? `/api/customers/${initialData.id}` : "/api/customers"
+      const method = isEditing ? "PUT" : "POST"
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
@@ -36,14 +40,14 @@ export default function NewCustomer() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to create customer")
+        throw new Error(isEditing ? "Failed to update customer" : "Failed to create customer")
       }
 
-      toast.success("Customer created successfully")
+      toast.success(isEditing ? "Customer updated successfully" : "Customer created successfully")
       router.push("/customers")
       router.refresh()
     } catch (error) {
-      toast.error("Failed to create customer")
+      toast.error(isEditing ? "Failed to update customer" : "Failed to create customer")
       console.error(error)
     } finally {
       setIsLoading(false)
@@ -63,7 +67,7 @@ export default function NewCustomer() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h2 className="text-3xl font-bold tracking-tight">Add Customer</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{isEditing ? "Edit Customer" : "Add Customer"}</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8 max-w-2xl">
@@ -113,7 +117,7 @@ export default function NewCustomer() {
 
         <div className="flex justify-end gap-4">
           <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
-          <Button type="submit" disabled={isLoading}>{isLoading ? "Creating..." : "Create Customer"}</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? "Saving..." : isEditing ? "Save Changes" : "Create Customer"}</Button>
         </div>
       </form>
     </div>
