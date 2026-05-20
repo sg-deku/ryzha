@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getFinancialContext } from "@/lib/ai/rag"
 import { getLLM } from "@/lib/ai/llm"
+import { appendAgentLog } from "./utils"
 
 export async function runOMAgent(transactionId: string) {
   const tx = await prisma.transaction.findUnique({ 
@@ -21,7 +22,6 @@ export async function runOMAgent(transactionId: string) {
   let isDeferred = deferredRules.some(rule => tx.description?.toLowerCase().includes(rule.toLowerCase()))
   let aiReasoning = ""
 
-  // Upgrade with RAG and AI
   if (tx.description && process.env.OPENAI_API_KEY) {
     try {
       const context = await getFinancialContext(`How should we recognize revenue for: ${tx.description}?`, tx.organizationId)
@@ -64,34 +64,21 @@ export async function runOMAgent(transactionId: string) {
       ? `O&M: ${aiReasoning} (ASC 606). Recognized $${monthlyPortion.toFixed(2)}, deferred $${deferred.toFixed(2)} over ${deferralMonths} months.`
       : `STOP! According to ASC 606, this transaction should be deferred. Recognized $${monthlyPortion.toFixed(2)}, deferred $${deferred.toFixed(2)}.`
 
+    await appendAgentLog(transactionId, "O&M", logMessage)
+
     updated = await prisma.transaction.update({
       where: { id: transactionId },
       data: {
         recognizedRevenue: monthlyPortion,
         deferredRevenue: deferred,
         revenueRecognitionType: "deferred",
-        agentLogs: {
-          push: {
-            agent: "O&M",
-            message: logMessage,
-            timestamp: new Date().toISOString()
-          }
-        }
-      }
+      },
     })
   } else {
-    updated = await prisma.transaction.update({
-      where: { id: transactionId },
-      data: {
-        agentLogs: {
-          push: { 
-            agent: "O&M", 
-            message: aiReasoning || "Approved: immediate revenue recognition.", 
-            timestamp: new Date().toISOString() 
-          }
-        }
-      }
-    })
+    const logMessage = aiReasoning || "Approved: immediate revenue recognition."
+    await appendAgentLog(transactionId, "O&M", logMessage)
+
+    updated = await prisma.transaction.findUnique({ where: { id: transactionId } })
   }
   return updated
 }

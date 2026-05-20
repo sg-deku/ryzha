@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import crypto from "crypto"
 import { getLLM } from "@/lib/ai/llm"
+import { appendAgentLog } from "./utils"
 
 export async function runAuditorAgent(transactionId: string) {
   const tx = await prisma.transaction.findUnique({
@@ -83,19 +84,11 @@ export async function runAuditorAgent(transactionId: string) {
     if (aiReasoning) logMessage += ` Investigation: ${aiReasoning}`
   }
 
+  await appendAgentLog(transactionId, "Auditor", logMessage)
+
   const updated = await prisma.transaction.update({
     where: { id: transactionId },
-    data: {
-      auditStatus,
-      auditHash,
-      agentLogs: {
-        push: { 
-          agent: "Auditor", 
-          message: logMessage, 
-          timestamp: new Date().toISOString() 
-        }
-      }
-    }
+    data: { auditStatus, auditHash },
   })
   return updated
 }

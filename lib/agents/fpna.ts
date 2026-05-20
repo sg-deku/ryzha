@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getLLM } from "@/lib/ai/llm"
+import { appendAgentLog } from "./utils"
 
 export async function runFPAgent(transactionId: string) {
   const tx = await prisma.transaction.findUnique({
@@ -96,20 +97,11 @@ export async function runFPAgent(transactionId: string) {
     }
   }
 
+  await appendAgentLog(transactionId, "FP&A", logMessage)
+
   const updated = await prisma.transaction.update({
     where: { id: transactionId },
-    data: {
-      runwayMonths,
-      zeroCashDate,
-      percentAhead,
-      agentLogs: {
-        push: {
-          agent: "FP&A",
-          message: logMessage,
-          timestamp: new Date().toISOString()
-        }
-      }
-    }
+    data: { runwayMonths, zeroCashDate, percentAhead },
   })
 
   // Update global financial snapshot

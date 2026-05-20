@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getLLM } from "@/lib/ai/llm"
+import { appendAgentLog } from "./utils"
 import { z } from "zod"
 
 const extractionSchema = z.object({
@@ -51,20 +52,14 @@ export async function runR2RAgent(transactionId: string) {
     }
   }
 
+  await appendAgentLog(transactionId, "R2R", logMessage, { metadata })
+
   const updated = await prisma.transaction.update({
     where: { id: transactionId },
     data: {
       recognizedRevenue: transaction.amount,
       revenueRecognitionType: "immediate",
-      agentLogs: {
-        push: { 
-          agent: "R2R", 
-          message: logMessage, 
-          timestamp: new Date().toISOString(),
-          metadata 
-        }
-      }
-    }
+    },
   })
   return updated
 }
