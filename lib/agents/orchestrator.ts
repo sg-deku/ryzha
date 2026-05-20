@@ -5,7 +5,7 @@ import { runAuditorAgent } from "./auditor"
 import { runFPAgent } from "./fpna"
 import { runMatchingAgent } from "./p2p/matching"
 import { runCollectionsAgent } from "./o2c/collections"
-import { sendVoiceSummary, sendSMSNotification } from "@/lib/notifications"
+import { sendVoiceSummary, sendSMSNotification, createNotification } from "@/lib/notifications"
 import { publishEvent } from "@/lib/events"
 
 export async function startAgentWorkflow(transactionId: string) {
@@ -119,6 +119,14 @@ export async function startAgentWorkflow(transactionId: string) {
     await sendVoiceSummary(transactionId)
     await sendSMSNotification(transactionId)
 
+    await createNotification({
+      organizationId: orgId,
+      type: "SUCCESS",
+      title: "Transaction Reconciled",
+      message: `Transaction for $${transaction.amount} from ${transaction.customerEmail ?? "unknown"} was successfully reconciled.`,
+      link: `/transactions/${transactionId}`
+    })
+
     await prisma.transaction.update({
       where: { id: transactionId },
       data: { workflowStatus: "completed" },
@@ -144,6 +152,13 @@ export async function startAgentWorkflow(transactionId: string) {
       transactionId,
       error: errMsg,
       timestamp: new Date(),
+    })
+    await createNotification({
+      organizationId: orgId,
+      type: "ERROR",
+      title: "Reconciliation Failed",
+      message: `Transaction ${transactionId} failed reconciliation.`,
+      link: `/transactions/${transactionId}`
     })
   }
 }
@@ -199,9 +214,25 @@ export async function startP2PWorkflow(vendorInvoiceId: string) {
       await appendP2PLog("Orchestrator", `Expense record created | Expense ID: ${expense.id} | Amount: $${expense.amount} | Category: ${expense.category}`)
       await appendP2PLog("Orchestrator", `P2P Workflow COMPLETED | Invoice #${updated.invoiceNumber} from ${invoice.vendor?.name ?? "vendor"} approved and expensed.`)
       await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { workflowStatus: "completed" } })
+      
+      await createNotification({
+        organizationId: orgId,
+        type: "SUCCESS",
+        title: "Invoice Matched & Expensed",
+        message: `Invoice #${updated.invoiceNumber} for $${updated.amount} was matched and expensed.`,
+        link: `/vendor-invoices/${vendorInvoiceId}`
+      })
     } else {
       await appendP2PLog("Orchestrator", `P2P Workflow STOPPED | Invoice #${updated.invoiceNumber} status is "${updated.status}". Manual review required before expense is created.`)
       await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { workflowStatus: "error" } })
+
+      await createNotification({
+        organizationId: orgId,
+        type: "WARNING",
+        title: "Invoice Disputed",
+        message: `Invoice #${updated.invoiceNumber} requires manual review. Status: ${updated.status}.`,
+        link: `/vendor-invoices/${vendorInvoiceId}`
+      })
     }
 
     await publishEvent(`org:${orgId}:events`, {
@@ -215,6 +246,14 @@ export async function startP2PWorkflow(vendorInvoiceId: string) {
     console.error("P2P Workflow error:", error)
     await appendP2PLog("Orchestrator", `P2P Workflow ERROR | Invoice ID: ${vendorInvoiceId} | ${error.message}`)
     await prisma.vendorInvoice.update({ where: { id: vendorInvoiceId }, data: { workflowStatus: "error" } }).catch(() => {})
+    
+    await createNotification({
+      organizationId: orgId,
+      type: "ERROR",
+      title: "P2P Workflow Failed",
+      message: `Error processing vendor invoice.`,
+      link: `/vendor-invoices/${vendorInvoiceId}`
+    }).catch(() => {})
   }
 }
 
@@ -277,6 +316,14 @@ export async function startO2CWorkflow(salesOrderId: string, scenario?: string) 
       await appendO2CLog("Collections", `Dunning recommended — ${order.customer.name} has an open invoice of $${order.totalAmount} (Order #${order.orderNumber}) with no payment received. Schedule follow-up contact.`)
       await appendO2CLog("Orchestrator", `O2C Collections flow COMPLETED | Order #${order.orderNumber} flagged. No financial pipeline triggered until payment is received.`)
       await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "completed" } })
+
+      await createNotification({
+        organizationId: orgId,
+        type: "WARNING",
+        title: "Collections Risk",
+        message: `Order #${order.orderNumber} from ${order.customer.name} was flagged for dunning outreach.`,
+        link: `/sales-orders/${salesOrderId}`
+      })
     } else {
       await appendO2CLog("Orchestrator", `O2C Workflow SKIPPED | Order #${order.orderNumber} is in status "${order.status}" — expected PAID or INVOICED. No action taken.`)
       await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "error" } })
@@ -292,5 +339,13 @@ export async function startO2CWorkflow(salesOrderId: string, scenario?: string) 
     console.error("O2C Workflow error:", error)
     await appendO2CLog("Orchestrator", `O2C Workflow ERROR | Order ID: ${salesOrderId} | Order #: ${order.orderNumber} | ${error.message}`)
     await prisma.salesOrder.update({ where: { id: salesOrderId }, data: { workflowStatus: "error" } }).catch(() => {})
+    
+    await createNotification({
+      organizationId: orgId,
+      type: "ERROR",
+      title: "O2C Workflow Failed",
+      message: `Error processing sales order #${order.orderNumber}.`,
+      link: `/sales-orders/${salesOrderId}`
+    }).catch(() => {})
   }
 }

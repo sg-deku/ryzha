@@ -1,6 +1,24 @@
 import { prisma } from "@/lib/prisma"
 import axios from "axios"
 
+export async function createNotification(data: {
+  organizationId: string
+  type: "INFO" | "SUCCESS" | "WARNING" | "ERROR"
+  title: string
+  message: string
+  link?: string
+}) {
+  return await prisma.notification.create({
+    data: {
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      link: data.link,
+      organizationId: data.organizationId,
+    }
+  })
+}
+
 export async function sendVoiceSummary(transactionId: string) {
   const tx = await prisma.transaction.findUnique({
     where: { id: transactionId },
