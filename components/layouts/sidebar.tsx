@@ -60,7 +60,7 @@ export function Sidebar() {
         >
         <div className="flex h-16 items-center border-b px-4">
           <div className="flex items-center gap-2 font-bold">
-            <img src="/logo.png?v=2" alt="Ryzha Logo" className="h-10 w-10 object-contain dark:invert" />
+            <div className="h-10 w-10 bg-primary logo-mask" />
             {!collapsed && <span className="text-xl">Ryzha</span>}
           </div>
         </div>

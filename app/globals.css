@@ -102,6 +102,17 @@
       transform: translateY(0);
     }
   }
+
+  .logo-mask {
+    mask-image: url('/logo.png?v=2');
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-image: url('/logo.png?v=2');
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+  }
 }
 
 @layer base {

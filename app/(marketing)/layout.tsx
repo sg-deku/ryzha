@@ -10,8 +10,8 @@ export default function MarketingLayout({
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold">
-            <img src="/logo.png?v=2" alt="Ryzha Logo" className="h-10 w-10 object-contain dark:invert" />
+          <Link href="/" className="flex items-center gap-2 font-bold group">
+            <div className="h-10 w-10 bg-primary logo-mask group-hover:opacity-90 transition-opacity" />
             <span className="text-xl">Ryzha</span>
           </Link>
           <div className="flex items-center gap-4 md:gap-6">
