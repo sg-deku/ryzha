@@ -11,7 +11,9 @@ async function main() {
     "invoices:manage",
     "expenses:manage",
     "reports:view",
-    "org:manage"
+    "org:manage",
+    "financial:manage",
+    "agent:manage"
   ]
 
   for (const pName of permissions) {
@@ -27,11 +29,12 @@ async function main() {
   // 2. Create Organization
   const org = await prisma.organization.upsert({
     where: { slug: 'ryzha-hq' },
-    update: {},
+    update: { onboardingCompleted: true },
     create: {
       name: 'Ryzha HQ',
       slug: 'ryzha-hq',
       plan: 'FREE',
+      onboardingCompleted: true,
     },
   })
 
@@ -71,6 +74,15 @@ async function main() {
           roleId: adminRole.id
         }
       }
+    },
+  })
+
+  await prisma.financialSettings.upsert({
+    where: { organizationId: org.id },
+    update: {},
+    create: {
+      organizationId: org.id,
+      deferredRevenueRules: ["annual", "yearly", "subscription"],
     },
   })
 
