@@ -111,19 +111,67 @@ export default async function LandingPage() {
                 </p>
               </div>
             </div>
-            <div className="bg-muted rounded-xl p-8 border shadow-sm flex items-center justify-center min-h-[400px]">
-              <div className="text-center space-y-4">
-                <div className="flex justify-center gap-4 text-primary">
-                  <BarChart3 className="h-12 w-12" />
-                  <Zap className="h-12 w-12" />
-                  <ShieldCheck className="h-12 w-12" />
+            <div className="relative rounded-xl border bg-background/50 shadow-2xl flex flex-col min-h-[400px] overflow-hidden">
+              {/* Terminal Header */}
+              <div className="flex items-center px-4 py-3 border-b bg-muted/50 backdrop-blur-sm">
+                <div className="flex gap-2">
+                  <div className="h-3 w-3 rounded-full bg-red-500/80"></div>
+                  <div className="h-3 w-3 rounded-full bg-yellow-500/80"></div>
+                  <div className="h-3 w-3 rounded-full bg-green-500/80"></div>
                 </div>
-                <p className="font-mono text-sm text-muted-foreground">
-                  [Agent Logs]<br/>
-                  Matching invoice... DONE<br/>
-                  Calculating runway... DONE<br/>
-                  Generating report... DONE
-                </p>
+                <div className="mx-auto text-xs font-mono text-muted-foreground flex items-center gap-2">
+                  <ShieldCheck className="h-3 w-3" /> agent-orchestrator.log
+                </div>
+              </div>
+              
+              {/* Terminal Content */}
+              <div className="flex-1 p-6 font-mono text-sm bg-zinc-950 text-zinc-300 flex flex-col gap-4">
+                <div className="flex items-start gap-3 opacity-80">
+                  <span className="text-emerald-500 mt-0.5">▶</span>
+                  <div>
+                    <div className="text-zinc-500">[10:42:54.120] Orchestrator</div>
+                    <div className="text-zinc-100">Workflow started | Transaction ID: tx_12984 | Amount: $12,500</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-500 mt-0.5">▶</span>
+                  <div className="w-full">
+                    <div className="text-zinc-500">[10:42:54.850] P2P Agent</div>
+                    <div className="flex justify-between items-center w-full">
+                      <span className="text-zinc-300">Matching invoice INV-1779268...</span>
+                      <span className="text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded text-xs">MATCHED</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-500 mt-0.5">▶</span>
+                  <div className="w-full">
+                    <div className="text-zinc-500">[10:42:55.210] R2R Agent</div>
+                    <div className="flex justify-between items-center w-full">
+                      <span className="text-zinc-300">Reconciling Stripe charge ch_3TZ5...</span>
+                      <span className="text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded text-xs">DONE</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-500 mt-0.5">▶</span>
+                  <div className="w-full">
+                    <div className="text-zinc-500">[10:42:56.050] FP&A Agent</div>
+                    <div className="flex justify-between items-center w-full">
+                      <span className="text-zinc-300">Calculating new runway forecast...</span>
+                      <span className="text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded text-xs">UPDATED</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 mt-auto pt-4 border-t border-zinc-800">
+                  <span className="text-blue-400 animate-pulse">●</span>
+                  <span className="text-zinc-500 italic">Waiting for next event...</span>
+                  <span className="inline-block w-2 h-4 bg-zinc-500 animate-pulse ml-1"></span>
+                </div>
               </div>
             </div>
           </div>
