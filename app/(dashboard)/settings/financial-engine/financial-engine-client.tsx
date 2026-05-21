@@ -380,9 +380,14 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                   </CardTitle>
                   <CardDescription>AI token consumption across all features for your organization.</CardDescription>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchUsage} disabled={usageLoading}>
-                  <RefreshCw className={`h-4 w-4 ${usageLoading ? "animate-spin" : ""}`} />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <a href="/settings/ai-usage">View Full Report</a>
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchUsage} disabled={usageLoading}>
+                    <RefreshCw className={`h-4 w-4 ${usageLoading ? "animate-spin" : ""}`} />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-5">
                 {usageLoading && !aiUsage ? (

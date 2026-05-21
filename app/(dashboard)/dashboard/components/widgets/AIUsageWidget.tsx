@@ -71,7 +71,7 @@ export function AIUsageWidget() {
               </div>
             </div>
             <Link
-              href="/settings/financial-engine?tab=ai"
+              href="/settings/ai-usage"
               className="block text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               View full breakdown →
