@@ -50,6 +50,10 @@ model Organization {
   o2cSettings      O2CSettings?
 
   dashboardLayouts DashboardLayout[]
+
+  // GL Models
+  glEntries        GeneralLedgerEntry[]
+  chartOfAccounts  ChartOfAccounts[]
 }
 
 model P2PSettings {
@@ -534,4 +538,40 @@ model DashboardLayout {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([userId, organizationId])
+}
+
+model GeneralLedgerEntry {
+  id             String   @id @default(cuid())
+  date           DateTime
+  accountType    String
+  accountName    String
+  debit          Float    @default(0)
+  credit         Float    @default(0)
+  amount         Float
+  description    String
+  sourceType     String
+  sourceId       String
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, date])
+  @@index([organizationId, accountType])
+  @@index([organizationId, sourceType])
+  @@index([sourceId, sourceType])
+}
+
+model ChartOfAccounts {
+  id             String   @id @default(cuid())
+  accountName    String
+  accountType    String
+  categoryMatch  String?
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, accountName])
 }

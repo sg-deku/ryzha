@@ -21,6 +21,7 @@ import {
   FilePenLine,
   ArrowLeftRight,
   TrendingUp,
+  BookOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -101,6 +102,12 @@ export function Sidebar() {
             href="/reports/profit-loss"
             icon={TrendingUp}
             label="Profit & Loss"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/reports/general-ledger"
+            icon={BookOpen}
+            label="General Ledger"
             collapsed={collapsed}
           />
           <SidebarItem
