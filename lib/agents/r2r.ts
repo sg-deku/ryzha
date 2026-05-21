@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 import { appendAgentLog } from "./utils"
 import { z } from "zod"
 
@@ -20,12 +20,7 @@ export async function runR2RAgent(transactionId: string) {
   // AI-powered extraction if description exists
   if (transaction.description && process.env.OPENAI_API_KEY) {
     try {
-      const model = await getLLM(transaction.organizationId, {
-        modelName: "gpt-4o-mini",
-        temperature: 0,
-      })
-
-      const response = await model.invoke([
+      const response = await callLLM(transaction.organizationId, [
         {
           role: "system",
           content: "Extract structured financial data from the transaction description. Respond in JSON."
@@ -34,7 +29,7 @@ export async function runR2RAgent(transactionId: string) {
           role: "user",
           content: transaction.description
         }
-      ])
+      ], "agent_r2r", { modelName: "gpt-4o-mini", temperature: 0 })
 
       // In a real implementation with structured output:
       // const result = await model.withStructuredOutput(extractionSchema).invoke(...)

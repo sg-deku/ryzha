@@ -1,25 +1,14 @@
 import { prisma } from "@/lib/prisma"
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 
 export async function runOrderIntakeAgent(organizationId: string, input: { text: string }) {
   if (!process.env.OPENAI_API_KEY) return null
 
   try {
-    const model = await getLLM(organizationId, {
-      modelName: "gpt-4o-mini",
-      temperature: 0,
-    })
-
-    const response = await model.invoke([
-      {
-        role: "system",
-        content: "Extract sales order details (customer_name, customer_email, items: [{ description, quantity, price }]) from text. Respond in JSON."
-      },
-      {
-        role: "user",
-        content: input.text
-      }
-    ])
+    const response = await callLLM(organizationId, [
+      { role: "system", content: "Extract sales order details (customer_name, customer_email, items: [{ description, quantity, price }]) from text. Respond in JSON." },
+      { role: "user", content: input.text }
+    ], "agent_o2c_order_intake", { modelName: "gpt-4o-mini", temperature: 0 })
 
     const parsed = JSON.parse(response.content as string)
     

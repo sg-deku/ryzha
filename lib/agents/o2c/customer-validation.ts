@@ -1,14 +1,10 @@
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 
 export async function runCustomerValidationAgent(customerData: any, organizationId: string) {
-  const model = await getLLM(organizationId, { modelName: "gpt-4o-mini", temperature: 0 })
-
-  const systemPrompt = "Validate the customer data for completeness and potential fraud risk."
-  
-  const response = await model.invoke([
-    { role: "system", content: systemPrompt },
+  const response = await callLLM(organizationId, [
+    { role: "system", content: "Validate the customer data for completeness and potential fraud risk." },
     { role: "user", content: `Customer Data: ${JSON.stringify(customerData)}` }
-  ])
+  ], "agent_o2c_validation", { modelName: "gpt-4o-mini", temperature: 0 })
 
   return {
     agent: "Customer Validation Agent",

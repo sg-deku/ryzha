@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 
 export async function runVendorIntakeAgent(organizationId: string, input: { name?: string, email?: string, text?: string }) {
   let name = input.name || "Unknown Vendor"
@@ -9,21 +9,10 @@ export async function runVendorIntakeAgent(organizationId: string, input: { name
 
   if (input.text && process.env.OPENAI_API_KEY) {
     try {
-      const model = await getLLM(organizationId, {
-        modelName: "gpt-4o-mini",
-        temperature: 0,
-      })
-
-      const response = await model.invoke([
-        {
-          role: "system",
-          content: "Extract vendor details (name, email, taxId, address) from the provided text. Respond in JSON."
-        },
-        {
-          role: "user",
-          content: input.text
-        }
-      ])
+      const response = await callLLM(organizationId, [
+        { role: "system", content: "Extract vendor details (name, email, taxId, address) from the provided text. Respond in JSON." },
+        { role: "user", content: input.text }
+      ], "agent_p2p_vendor", { modelName: "gpt-4o-mini", temperature: 0 })
 
       try {
         const parsed = JSON.parse(response.content as string)

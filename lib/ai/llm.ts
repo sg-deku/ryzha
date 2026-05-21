@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { BaseMessage } from "@langchain/core/messages"
 import { ChatOpenAI } from "@langchain/openai"
 import { ChatAnthropic } from "@langchain/anthropic"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
@@ -83,4 +84,48 @@ export async function getLLM(organizationId: string, options: any = {}) {
         ...options,
       })
   }
+}
+
+export async function callLLM(
+  organizationId: string,
+  messages: (BaseMessage | { role: string; content: string })[],
+  feature: string,
+  options: any = {}
+) {
+  const settings = await prisma.financialSettings.findUnique({
+    where: { organizationId },
+    select: { aiProvider: true, aiModel: true },
+  })
+  const provider = settings?.aiProvider || detectAvailableProvider()
+  const model = settings?.aiModel || defaultModelForProvider(provider)
+
+  const llm = await getLLM(organizationId, options)
+  const response = await llm.invoke(messages as any)
+
+  const usage = (response as any).usage_metadata as
+    | { input_tokens?: number; output_tokens?: number; total_tokens?: number }
+    | undefined
+  const tokenUsage = (response as any).response_metadata?.token_usage as
+    | { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
+    | undefined
+
+  const promptTokens = usage?.input_tokens ?? tokenUsage?.prompt_tokens ?? 0
+  const completionTokens = usage?.output_tokens ?? tokenUsage?.completion_tokens ?? 0
+  const totalTokens = usage?.total_tokens ?? tokenUsage?.total_tokens ?? (promptTokens + completionTokens)
+
+  if (totalTokens > 0) {
+    prisma.aIUsageLog.create({
+      data: {
+        organizationId,
+        feature,
+        model,
+        provider,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+      },
+    }).catch(() => {})
+  }
+
+  return response
 }

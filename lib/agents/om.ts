@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getFinancialContext } from "@/lib/ai/rag"
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 import { appendAgentLog } from "./utils"
 
 export async function runOMAgent(transactionId: string) {
@@ -26,12 +26,7 @@ export async function runOMAgent(transactionId: string) {
     try {
       const context = await getFinancialContext(`How should we recognize revenue for: ${tx.description}?`, tx.organizationId)
       
-      const model = await getLLM(tx.organizationId, {
-        modelName: "gpt-4o-mini",
-        temperature: 0,
-      })
-
-      const response = await model.invoke([
+      const response = await callLLM(tx.organizationId, [
         {
           role: "system",
           content: `You are an expert accountant (O&M Agent). Decide if revenue should be recognized immediately or deferred based on ASC 606 rules. 
@@ -42,7 +37,7 @@ export async function runOMAgent(transactionId: string) {
           role: "user",
           content: `Transaction: ${tx.description}, Amount: ${tx.amount}`
         }
-      ])
+      ], "agent_om", { modelName: "gpt-4o-mini", temperature: 0 })
 
       try {
         const result = JSON.parse(response.content as string)

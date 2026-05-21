@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import crypto from "crypto"
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 import { appendAgentLog } from "./utils"
 
 export async function runAuditorAgent(transactionId: string) {
@@ -40,12 +40,7 @@ export async function runAuditorAgent(transactionId: string) {
   // 2. AI-powered investigative reasoning
   if (process.env.OPENAI_API_KEY) {
     try {
-      const model = await getLLM(tx.organizationId, {
-        modelName: "gpt-4o-mini",
-        temperature: 0,
-      })
-
-      const response = await model.invoke([
+      const response = await callLLM(tx.organizationId, [
         {
           role: "system",
           content: `You are a forensic auditor. Investigate this transaction for anomalies. 
@@ -56,7 +51,7 @@ export async function runAuditorAgent(transactionId: string) {
           role: "user",
           content: `Transaction: ${tx.description}, Amount: ${tx.amount}, Contract Found: ${!!contract}`
         }
-      ])
+      ], "agent_auditor", { modelName: "gpt-4o-mini", temperature: 0 })
 
       try {
         const result = JSON.parse(response.content as string)

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 
 export async function runCollectionsAgent(organizationId: string) {
   // Find overdue invoices (sales orders that are INVOICED but not PAID and past due)
@@ -20,21 +20,10 @@ export async function runCollectionsAgent(organizationId: string) {
 
     if (process.env.OPENAI_API_KEY) {
       try {
-        const model = await getLLM(organizationId, {
-          modelName: "gpt-4o-mini",
-          temperature: 0.7,
-        })
-
-        const response = await model.invoke([
-          {
-            role: "system",
-            content: "Generate a polite but firm dunning message for an overdue invoice. Respond in JSON with { message: string }."
-          },
-          {
-            role: "user",
-            content: `Customer: ${order.customer.name}, Amount: $${order.totalAmount}, Days Overdue: 30+`
-          }
-        ])
+        const response = await callLLM(organizationId, [
+          { role: "system", content: "Generate a polite but firm dunning message for an overdue invoice. Respond in JSON with { message: string }." },
+          { role: "user", content: `Customer: ${order.customer.name}, Amount: $${order.totalAmount}, Days Overdue: 30+` }
+        ], "agent_o2c_collections", { modelName: "gpt-4o-mini", temperature: 0.7 })
 
         const parsed = JSON.parse(response.content as string)
         dunningMessage = parsed.message

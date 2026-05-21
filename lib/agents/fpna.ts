@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 import { appendAgentLog } from "./utils"
 
 export async function runFPAgent(transactionId: string) {
@@ -63,12 +63,7 @@ export async function runFPAgent(transactionId: string) {
   // Upgrade with AI Narrative & Scenario Analysis
   if (process.env.OPENAI_API_KEY) {
     try {
-      const model = await getLLM(tx.organizationId, {
-        modelName: "gpt-4o-mini",
-        temperature: 0.7,
-      })
-
-      const response = await model.invoke([
+      const response = await callLLM(tx.organizationId, [
         {
           role: "system",
           content: `You are a strategic CFO (FP&A Agent). Analyze the company's financial health.
@@ -83,7 +78,7 @@ export async function runFPAgent(transactionId: string) {
           role: "user",
           content: `Current transaction: ${tx.description} for $${tx.amount}. Give me a short narrative summary.`
         }
-      ])
+      ], "agent_fpna", { modelName: "gpt-4o-mini", temperature: 0.7 })
 
       try {
         const result = JSON.parse(response.content as string)

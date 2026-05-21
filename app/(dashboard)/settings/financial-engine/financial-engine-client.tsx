@@ -63,7 +63,24 @@ const FEATURE_META: Record<string, { label: string; icon: React.ReactNode }> = {
   chat: { label: "AI Chat", icon: <MessageSquare className="h-3.5 w-3.5" /> },
   report_query: { label: "Report Queries", icon: <FileSearch className="h-3.5 w-3.5" /> },
   report_narrative: { label: "Report Narratives", icon: <Bot className="h-3.5 w-3.5" /> },
+  __agents__: { label: "Workflow Agents", icon: <Zap className="h-3.5 w-3.5" /> },
   unknown: { label: "Other", icon: <Zap className="h-3.5 w-3.5" /> },
+}
+
+function collapseFeatures(byFeature: { feature: string; totalTokens: number; calls: number }[]) {
+  const result: { feature: string; totalTokens: number; calls: number }[] = []
+  let agentTokens = 0
+  let agentCalls = 0
+  for (const f of byFeature) {
+    if (f.feature.startsWith("agent_")) {
+      agentTokens += f.totalTokens
+      agentCalls += f.calls
+    } else {
+      result.push(f)
+    }
+  }
+  if (agentCalls > 0) result.push({ feature: "__agents__", totalTokens: agentTokens, calls: agentCalls })
+  return result.sort((a, b) => b.totalTokens - a.totalTokens)
 }
 
 function fmtTokens(n: number) {
@@ -410,7 +427,7 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">This Month by Feature</p>
                         <div className="space-y-2">
-                          {aiUsage.byFeature.map((f) => {
+                          {collapseFeatures(aiUsage.byFeature).map((f) => {
                             const meta = FEATURE_META[f.feature] ?? FEATURE_META.unknown
                             const pct = aiUsage.thisMonth.totalTokens > 0
                               ? Math.round((f.totalTokens / aiUsage.thisMonth.totalTokens) * 100)

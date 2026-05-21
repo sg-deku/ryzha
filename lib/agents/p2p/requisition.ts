@@ -1,21 +1,17 @@
 import { prisma } from "@/lib/prisma"
-import { getLLM } from "@/lib/ai/llm"
+import { callLLM } from "@/lib/ai/llm"
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"
 
 export async function runRequisitionAgent(requisitionData: any, organizationId: string) {
-  const model = await getLLM(organizationId, { modelName: "gpt-4o-mini", temperature: 0 })
-
-  const systemMessage = new SystemMessage(`
+  const response = await callLLM(organizationId, [
+    new SystemMessage(`
     You are an AI Purchase Requisition Agent. 
     Your job is to parse natural language purchase requests and extract structured data.
     Identify the requested items, estimated costs, and potential vendors.
     Check if the request is within typical budget patterns.
-  `)
-
-  const response = await model.invoke([
-    systemMessage,
+  `),
     new HumanMessage(`Organization ID: ${organizationId}\nRequest: ${JSON.stringify(requisitionData)}`)
-  ])
+  ], "agent_p2p_requisition", { modelName: "gpt-4o-mini", temperature: 0 })
 
   // Simple mock of structured extraction for now
   const parsedData = {
