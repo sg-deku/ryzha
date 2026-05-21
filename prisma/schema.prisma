@@ -48,6 +48,8 @@ model Organization {
   customers        Customer[]
   salesOrders      SalesOrder[]
   o2cSettings      O2CSettings?
+
+  dashboardLayouts DashboardLayout[]
 }
 
 model P2PSettings {
@@ -520,4 +522,16 @@ model FinancialSnapshot {
   updatedAt             DateTime @updatedAt
   organizationId        String   @unique
   organization          Organization @relation(fields: [organizationId], references: [id])
+}
+
+model DashboardLayout {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  widgets        Json
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, organizationId])
 }
