@@ -1,8 +1,25 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Settings2 } from "lucide-react"
+import { Settings2, GripVertical } from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { WidgetConfig, DEFAULT_WIDGET_CONFIG } from "@/lib/dashboard/widget-config"
 import { DashboardLayoutEditor } from "./components/DashboardLayoutEditor"
 import { KpiRowWidget } from "./components/widgets/KpiRowWidget"
@@ -21,46 +38,61 @@ interface DashboardClientProps {
   overdueSales?: number
 }
 
-function renderWidget(
+const PAIRED_WIDGETS = new Set(["cash_flow", "agent_log", "anomaly_alerts", "recent_transactions", "ai_usage"])
+
+function renderWidgetContent(
   widget: WidgetConfig,
   props: { pendingPurchases: number; overdueSales: number },
   onSettingsChange: (id: string, settings: Record<string, any>) => void
 ) {
   switch (widget.id) {
-    case "kpi_row":
-      return <KpiRowWidget key={widget.id} />
-    case "alerts_row":
-      return (
-        <AlertsRowWidget
-          key={widget.id}
-          pendingPurchases={props.pendingPurchases}
-          overdueSales={props.overdueSales}
-        />
-      )
-    case "real_time_pl":
-      return (
-        <RealTimePLWidget
-          key={widget.id}
-          settings={widget.settings}
-          onSettingsChange={(s) => onSettingsChange(widget.id, s)}
-        />
-      )
-    case "cash_flow":
-      return <CashFlowWidget key={widget.id} />
-    case "agent_log":
-      return <AgentLogWidget key={widget.id} />
-    case "anomaly_alerts":
-      return <AnomalyAlertsWidget key={widget.id} />
-    case "recent_transactions":
-      return <RecentTransactionsWidget key={widget.id} />
-    case "ai_usage":
-      return <AIUsageWidget key={widget.id} />
-    default:
-      return null
+    case "kpi_row":       return <KpiRowWidget />
+    case "alerts_row":    return <AlertsRowWidget pendingPurchases={props.pendingPurchases} overdueSales={props.overdueSales} />
+    case "real_time_pl":  return <RealTimePLWidget settings={widget.settings} onSettingsChange={(s) => onSettingsChange(widget.id, s)} />
+    case "cash_flow":     return <CashFlowWidget />
+    case "agent_log":     return <AgentLogWidget />
+    case "anomaly_alerts":return <AnomalyAlertsWidget />
+    case "recent_transactions": return <RecentTransactionsWidget />
+    case "ai_usage":      return <AIUsageWidget />
+    default:              return null
   }
 }
 
-const PAIRED_WIDGETS = new Set(["cash_flow", "agent_log", "anomaly_alerts", "recent_transactions", "ai_usage"])
+function SortableWidget({
+  widget,
+  widgetProps,
+  onSettingsChange,
+  isDragging,
+}: {
+  widget: WidgetConfig
+  widgetProps: { pendingPurchases: number; overdueSales: number }
+  onSettingsChange: (id: string, settings: Record<string, any>) => void
+  isDragging?: boolean
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSelf } = useSortable({ id: widget.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isSelf ? 0.4 : 1,
+    position: "relative" as const,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        className="absolute top-3 left-3 z-10 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </div>
+      <div className="pl-1">
+        {renderWidgetContent(widget, widgetProps, onSettingsChange)}
+      </div>
+    </div>
+  )
+}
 
 export function DashboardClient({
   userName,
@@ -71,15 +103,30 @@ export function DashboardClient({
   const [widgets, setWidgets] = useState<WidgetConfig[]>(DEFAULT_WIDGET_CONFIG)
   const [editorOpen, setEditorOpen] = useState(false)
   const [layoutLoaded, setLayoutLoaded] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
 
   useEffect(() => {
     fetch("/api/dashboard/layout")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.widgets) setWidgets(data.widgets)
-      })
+      .then((data) => { if (data?.widgets) setWidgets(data.widgets) })
       .catch(() => {})
       .finally(() => setLayoutLoaded(true))
+  }, [])
+
+  const saveLayout = useCallback((newWidgets: WidgetConfig[]) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      fetch("/api/dashboard/layout", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ widgets: newWidgets }),
+      }).catch(() => {})
+    }, 600)
   }, [])
 
   const handleSaveLayout = async (newWidgets: WidgetConfig[]) => {
@@ -95,70 +142,59 @@ export function DashboardClient({
   }
 
   const handleSettingsChange = useCallback((id: string, settings: Record<string, any>) => {
-    setWidgets((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, settings: { ...w.settings, ...settings } } : w))
-    )
-    fetch("/api/dashboard/layout", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        widgets: widgets.map((w) =>
-          w.id === id ? { ...w, settings: { ...w.settings, ...settings } } : w
-        ),
-      }),
-    }).catch(() => {})
-  }, [widgets])
+    setWidgets((prev) => {
+      const next = prev.map((w) => (w.id === id ? { ...w, settings: { ...w.settings, ...settings } } : w))
+      saveLayout(next)
+      return next
+    })
+  }, [saveLayout])
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null)
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    setWidgets((prev) => {
+      const oldIndex = prev.findIndex((w) => w.id === active.id)
+      const newIndex = prev.findIndex((w) => w.id === over.id)
+      const reordered = arrayMove(prev, oldIndex, newIndex).map((w, i) => ({ ...w, order: i + 1 }))
+      saveLayout(reordered)
+      return reordered
+    })
+  }
 
   const visible = [...widgets]
     .filter((w) => w.visible)
     .sort((a, b) => a.order - b.order)
 
-  const pairedGroups: WidgetConfig[][] = []
-  const standalone: WidgetConfig[] = []
-  let pairBuffer: WidgetConfig[] = []
+  const widgetProps = { pendingPurchases, overdueSales }
 
-  for (const w of visible) {
-    if (PAIRED_WIDGETS.has(w.id)) {
-      pairBuffer.push(w)
-      if (pairBuffer.length === 2) {
-        pairedGroups.push([...pairBuffer])
-        pairBuffer = []
-      }
+  const rows: React.ReactNode[] = []
+  let i = 0
+  while (i < visible.length) {
+    const w = visible[i]
+    if (PAIRED_WIDGETS.has(w.id) && i + 1 < visible.length && PAIRED_WIDGETS.has(visible[i + 1].id)) {
+      const w2 = visible[i + 1]
+      rows.push(
+        <div key={`pair-${w.id}-${w2.id}`} className="grid gap-6 lg:grid-cols-2">
+          <SortableWidget widget={w} widgetProps={widgetProps} onSettingsChange={handleSettingsChange} />
+          <SortableWidget widget={w2} widgetProps={widgetProps} onSettingsChange={handleSettingsChange} />
+        </div>
+      )
+      i += 2
     } else {
-      if (pairBuffer.length > 0) {
-        pairedGroups.push([...pairBuffer])
-        pairBuffer = []
-      }
-      standalone.push(w)
+      rows.push(
+        <SortableWidget key={w.id} widget={w} widgetProps={widgetProps} onSettingsChange={handleSettingsChange} />
+      )
+      i++
     }
   }
-  if (pairBuffer.length > 0) pairedGroups.push([...pairBuffer])
 
-  const rendered: React.ReactNode[] = []
-  let pairGroupIdx = 0
-
-  for (const w of visible) {
-    if (PAIRED_WIDGETS.has(w.id)) {
-      const group = pairedGroups[pairGroupIdx]
-      if (group && group[0].id === w.id) {
-        rendered.push(
-          <div key={`pair-${pairGroupIdx}`} className="grid gap-6 lg:grid-cols-2">
-            {group.map((gw) =>
-              renderWidget(gw, { pendingPurchases, overdueSales }, handleSettingsChange)
-            )}
-          </div>
-        )
-        pairGroupIdx++
-        if (group.length === 2) {
-          const secondId = group[1].id
-          const secondIdx = visible.findIndex((v) => v.id === secondId)
-          if (secondIdx > -1) visible.splice(secondIdx, 1)
-        }
-      }
-    } else {
-      rendered.push(renderWidget(w, { pendingPurchases, overdueSales }, handleSettingsChange))
-    }
-  }
+  const activeWidget = activeId ? widgets.find((w) => w.id === activeId) : null
 
   return (
     <div className="space-y-8">
@@ -169,19 +205,32 @@ export function DashboardClient({
           </h1>
           <p className="text-muted-foreground text-sm">Your financial overview at a glance</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => setEditorOpen(true)}
-        >
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => setEditorOpen(true)}>
           <Settings2 className="h-4 w-4" />
           Customize
         </Button>
       </div>
 
       {layoutLoaded ? (
-        rendered
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={visible.map((w) => w.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-6">
+              {rows}
+            </div>
+          </SortableContext>
+          <DragOverlay>
+            {activeWidget ? (
+              <div className="opacity-90 shadow-2xl rounded-xl ring-2 ring-primary/30">
+                {renderWidgetContent(activeWidget, widgetProps, handleSettingsChange)}
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       ) : (
         <div className="space-y-8">
           {[1, 2, 3].map((i) => (
