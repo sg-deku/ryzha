@@ -18,7 +18,7 @@ export async function runCollectionsAgent(organizationId: string) {
     let action = "LOG_OVERDUE"
     let dunningMessage = ""
 
-    if (process.env.OPENAI_API_KEY) {
+    try {
       try {
         const response = await callLLM(organizationId, [
           { role: "system", content: "Generate a polite but firm dunning message for an overdue invoice. Respond in JSON with { message: string }." },

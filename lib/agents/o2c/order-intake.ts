@@ -2,8 +2,6 @@ import { prisma } from "@/lib/prisma"
 import { callLLM } from "@/lib/ai/llm"
 
 export async function runOrderIntakeAgent(organizationId: string, input: { text: string }) {
-  if (!process.env.OPENAI_API_KEY) return null
-
   try {
     const response = await callLLM(organizationId, [
       { role: "system", content: "Extract sales order details (customer_name, customer_email, items: [{ description, quantity, price }]) from text. Respond in JSON." },

@@ -18,7 +18,7 @@ export async function runR2RAgent(transactionId: string) {
   let metadata = {}
 
   // AI-powered extraction if description exists
-  if (transaction.description && process.env.OPENAI_API_KEY) {
+  if (transaction.description) {
     try {
       const response = await callLLM(transaction.organizationId, [
         {

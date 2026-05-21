@@ -22,7 +22,7 @@ export async function runOMAgent(transactionId: string) {
   let isDeferred = deferredRules.some(rule => tx.description?.toLowerCase().includes(rule.toLowerCase()))
   let aiReasoning = ""
 
-  if (tx.description && process.env.OPENAI_API_KEY) {
+  if (tx.description) {
     try {
       const context = await getFinancialContext(`How should we recognize revenue for: ${tx.description}?`, tx.organizationId)
       

@@ -38,7 +38,7 @@ export async function runAuditorAgent(transactionId: string) {
   }
 
   // 2. AI-powered investigative reasoning
-  if (process.env.OPENAI_API_KEY) {
+  try {
     try {
       const response = await callLLM(tx.organizationId, [
         {

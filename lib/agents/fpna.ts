@@ -61,7 +61,7 @@ export async function runFPAgent(transactionId: string) {
   let aiNarrative = ""
 
   // Upgrade with AI Narrative & Scenario Analysis
-  if (process.env.OPENAI_API_KEY) {
+  try {
     try {
       const response = await callLLM(tx.organizationId, [
         {

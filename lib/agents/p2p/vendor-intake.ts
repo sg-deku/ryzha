@@ -7,7 +7,7 @@ export async function runVendorIntakeAgent(organizationId: string, input: { name
   let taxId = ""
   let address = {}
 
-  if (input.text && process.env.OPENAI_API_KEY) {
+  if (input.text) {
     try {
       const response = await callLLM(organizationId, [
         { role: "system", content: "Extract vendor details (name, email, taxId, address) from the provided text. Respond in JSON." },
