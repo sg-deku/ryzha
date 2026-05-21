@@ -118,6 +118,7 @@ export function GeneralLedgerClient() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [autoSynced, setAutoSynced] = useState(false)
   const [selectedPreset, setSelectedPreset] = useState("Last 30 days")
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"))
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"))
@@ -154,6 +155,20 @@ export function GeneralLedgerClient() {
   }, [startDate, endDate, accountType, sourceType, accountNameFilter, drilldownAccount])
 
   useEffect(() => {
+    if (!autoSynced) {
+      setAutoSynced(true)
+      setSyncing(true)
+      fetch("/api/reports/general-ledger", { method: "POST" })
+        .catch(() => {})
+        .finally(() => {
+          setSyncing(false)
+          fetchData(1)
+        })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!autoSynced) return
     setPage(1)
     fetchData(1)
   }, [startDate, endDate, accountType, sourceType, accountNameFilter, drilldownAccount])

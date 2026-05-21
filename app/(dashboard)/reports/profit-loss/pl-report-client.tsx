@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -85,7 +85,7 @@ interface MonthlyRow {
   grossMargin: number
 }
 
-export function PLReportClient() {
+function PLReportInner() {
   const searchParams = useSearchParams()
   const initialPreset = searchParams.get("preset") ?? "this_month"
 
@@ -444,5 +444,13 @@ export function PLReportClient() {
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+export function PLReportClient() {
+  return (
+    <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-xl bg-muted" />}>
+      <PLReportInner />
+    </Suspense>
   )
 }

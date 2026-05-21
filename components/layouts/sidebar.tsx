@@ -99,12 +99,6 @@ export function Sidebar() {
             collapsed={collapsed}
           />
           <SidebarItem
-            href="/reports/profit-loss"
-            icon={TrendingUp}
-            label="Profit & Loss"
-            collapsed={collapsed}
-          />
-          <SidebarItem
             href="/reports/general-ledger"
             icon={BookOpen}
             label="General Ledger"

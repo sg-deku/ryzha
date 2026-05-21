@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { CommandPalette } from "@/components/ui/command-palette"
+import { FloatingAIChat } from "@/components/chat/floating-ai-chat"
 
 import Link from "next/link"
 
@@ -93,6 +94,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
       <CommandPalette />
       <BottomNav />
+      <FloatingAIChat />
     </div>
   )
 }
