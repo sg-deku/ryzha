@@ -182,7 +182,7 @@ export function AIUsagePage() {
                     <BarChart data={data.monthlyTrend} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                       <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} width={48} />
-                      <Tooltip formatter={(v: number | string) => [fmt(Number(v)), "Tokens"]} />
+                      <Tooltip formatter={((v: any) => [fmt(Number(v)), "Tokens"]) as any} />
                       <Bar dataKey="tokens" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -297,7 +297,7 @@ export function AIUsagePage() {
                           <Cell key={p.provider} fill={PROVIDER_COLORS[p.provider] ?? "#94a3b8"} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(v: number | string) => [fmt(Number(v)), "Tokens"]} />
+                      <Tooltip formatter={((v: any) => [fmt(Number(v)), "Tokens"]) as any} />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
