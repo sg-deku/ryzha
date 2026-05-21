@@ -20,6 +20,7 @@ import {
   Globe,
   FilePenLine,
   ArrowLeftRight,
+  BookOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -94,6 +95,12 @@ export function Sidebar() {
             href="/reports"
             icon={BarChart}
             label="Reports"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            href="/reports/general-ledger"
+            icon={BookOpen}
+            label="General Ledger"
             collapsed={collapsed}
           />
           <SidebarItem
