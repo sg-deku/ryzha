@@ -62,34 +62,32 @@ export async function runFPAgent(transactionId: string) {
 
   // Upgrade with AI Narrative & Scenario Analysis
   try {
-    try {
-      const response = await callLLM(tx.organizationId, [
-        {
-          role: "system",
-          content: `You are a strategic CFO (FP&A Agent). Analyze the company's financial health.
+    const response = await callLLM(tx.organizationId, [
+      {
+        role: "system",
+        content: `You are a strategic CFO (FP&A Agent). Analyze the company's financial health.
           Runway: ${runwayMonths.toFixed(1)} months
           Zero Cash Date: ${zeroCashDate.toLocaleDateString()}
           Monthly Burn: $${avgMonthlyExpenses.toFixed(2)}
           Revenue vs Plan: ${percentAhead.toFixed(0)}%
           
           Respond with JSON: { "narrative": string, "scenarios": { "optimistic": string, "pessimistic": string } }`
-        },
-        {
-          role: "user",
-          content: `Current transaction: ${tx.description} for $${tx.amount}. Give me a short narrative summary.`
-        }
-      ], "agent_fpna", { modelName: "gpt-4o-mini", temperature: 0.7 })
-
-      try {
-        const result = JSON.parse(response.content as string)
-        aiNarrative = result.narrative
-        logMessage = `FP&A: ${aiNarrative}`
-      } catch (e) {
-        console.error("FP&A AI narrative failed", e)
+      },
+      {
+        role: "user",
+        content: `Current transaction: ${tx.description} for $${tx.amount}. Give me a short narrative summary.`
       }
-    } catch (error) {
-      console.error("FP&A AI failed", error)
+    ], "agent_fpna", { temperature: 0.7 })
+
+    try {
+      const result = JSON.parse(response.content as string)
+      aiNarrative = result.narrative
+      logMessage = `FP&A: ${aiNarrative}`
+    } catch (e) {
+      console.error("FP&A AI narrative failed", e)
     }
+  } catch (error) {
+    console.error("FP&A AI failed", error)
   }
 
   await appendAgentLog(transactionId, "FP&A", logMessage)

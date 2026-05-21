@@ -39,30 +39,28 @@ export async function runAuditorAgent(transactionId: string) {
 
   // 2. AI-powered investigative reasoning
   try {
-    try {
-      const response = await callLLM(tx.organizationId, [
-        {
-          role: "system",
-          content: `You are a forensic auditor. Investigate this transaction for anomalies. 
+    const response = await callLLM(tx.organizationId, [
+      {
+        role: "system",
+        content: `You are a forensic auditor. Investigate this transaction for anomalies. 
           Consider: amount vs description, contract availability, and common fraud patterns.
           Respond with JSON: { "is_anomaly": boolean, "investigation_notes": string, "risk_score": number }`
-        },
-        {
-          role: "user",
-          content: `Transaction: ${tx.description}, Amount: ${tx.amount}, Contract Found: ${!!contract}`
-        }
-      ], "agent_auditor", { modelName: "gpt-4o-mini", temperature: 0 })
-
-      try {
-        const result = JSON.parse(response.content as string)
-        anomalyDetected = result.is_anomaly
-        aiReasoning = result.investigation_notes
-      } catch (e) {
-        console.error("Auditor AI reasoning failed", e)
+      },
+      {
+        role: "user",
+        content: `Transaction: ${tx.description}, Amount: ${tx.amount}, Contract Found: ${!!contract}`
       }
-    } catch (error) {
-      console.error("Auditor AI failed", error)
+    ], "agent_auditor", { temperature: 0 })
+
+    try {
+      const result = JSON.parse(response.content as string)
+      anomalyDetected = result.is_anomaly
+      aiReasoning = result.investigation_notes
+    } catch (e) {
+      console.error("Auditor AI reasoning failed", e)
     }
+  } catch (error) {
+    console.error("Auditor AI failed", error)
   }
 
   if (contract && contract.status === "signed") {

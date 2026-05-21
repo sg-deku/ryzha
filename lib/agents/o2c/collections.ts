@@ -19,18 +19,16 @@ export async function runCollectionsAgent(organizationId: string) {
     let dunningMessage = ""
 
     try {
-      try {
-        const response = await callLLM(organizationId, [
-          { role: "system", content: "Generate a polite but firm dunning message for an overdue invoice. Respond in JSON with { message: string }." },
-          { role: "user", content: `Customer: ${order.customer.name}, Amount: $${order.totalAmount}, Days Overdue: 30+` }
-        ], "agent_o2c_collections", { modelName: "gpt-4o-mini", temperature: 0.7 })
+      const response = await callLLM(organizationId, [
+        { role: "system", content: "Generate a polite but firm dunning message for an overdue invoice. Respond in JSON with { message: string }." },
+        { role: "user", content: `Customer: ${order.customer.name}, Amount: $${order.totalAmount}, Days Overdue: 30+` }
+      ], "agent_o2c_collections", { temperature: 0.7 })
 
-        const parsed = JSON.parse(response.content as string)
-        dunningMessage = parsed.message
-        action = "SEND_DUNNING"
-      } catch (e) {
-        console.error("Collections AI failed", e)
-      }
+      const parsed = JSON.parse(response.content as string)
+      dunningMessage = parsed.message
+      action = "SEND_DUNNING"
+    } catch (e) {
+      console.error("Collections AI failed", e)
     }
 
     results.push({
