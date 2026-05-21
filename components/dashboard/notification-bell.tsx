@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatDistanceToNow } from "date-fns"
 
 interface Notification {
@@ -94,9 +93,9 @@ export function NotificationBell() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <ScrollArea className="h-80">
+        <div className="max-h-80 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
+            <div className="flex h-32 items-center justify-center p-4 text-sm text-muted-foreground">
               No notifications
             </div>
           ) : (
@@ -120,7 +119,7 @@ export function NotificationBell() {
               </DropdownMenuItem>
             ))
           )}
-        </ScrollArea>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )
