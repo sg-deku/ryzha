@@ -290,7 +290,7 @@ export function AIUsagePage() {
                         outerRadius={80}
                         paddingAngle={3}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={((props: any) => `${props.name ?? ""} ${(((props.percent as number) ?? 0) * 100).toFixed(0)}%`) as any}
                         labelLine={false}
                       >
                         {data.byProvider.map((p) => (
