@@ -4,6 +4,7 @@ import { ChatOpenAI } from "@langchain/openai"
 import { ChatAnthropic } from "@langchain/anthropic"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { ChatOllama } from "@langchain/ollama"
+import { getAIClientConfig } from "@/lib/ai/client"
 
 function detectAvailableProvider(): string {
   if (process.env.OPENAI_API_KEY) return "openai"
@@ -86,59 +87,50 @@ export async function getLLM(organizationId: string, options: any = {}) {
   }
 }
 
+function toRawMessages(messages: (BaseMessage | { role: string; content: string })[]) {
+  return messages.map((m) => {
+    if (typeof (m as any).role === "string") {
+      return m as { role: string; content: string }
+    }
+    const lc = m as BaseMessage
+    const type = lc._getType()
+    const role = type === "human" ? "user" : type === "ai" ? "assistant" : "system"
+    const content = typeof lc.content === "string" ? lc.content : JSON.stringify(lc.content)
+    return { role, content }
+  })
+}
+
 export async function callLLM(
   organizationId: string,
   messages: (BaseMessage | { role: string; content: string })[],
   feature: string,
   options: any = {}
 ) {
-  const settings = await prisma.financialSettings.findUnique({
-    where: { organizationId },
-    select: { aiProvider: true, aiModel: true },
+  const { client, model, provider } = await getAIClientConfig(organizationId)
+
+  const rawMessages = toRawMessages(messages)
+
+  const completion = await client.chat.completions.create({
+    model,
+    messages: rawMessages as any,
+    temperature: options.temperature ?? 0.2,
   })
-  const provider = settings?.aiProvider || detectAvailableProvider()
-  const model = settings?.aiModel || defaultModelForProvider(provider)
 
-  const { modelName: _mn, model: _m, temperature: _t, ...safeOptions } = options
-  const llm = await getLLM(organizationId, safeOptions)
-
-  let cbPrompt = 0
-  let cbCompletion = 0
-  let cbTotal = 0
-
-  const usageCallback = {
-    handleLLMEnd(output: any) {
-      const tu = output?.llmOutput?.tokenUsage
-      if (tu) {
-        cbPrompt = tu.promptTokens ?? tu.prompt_tokens ?? 0
-        cbCompletion = tu.completionTokens ?? tu.completion_tokens ?? 0
-        cbTotal = tu.totalTokens ?? tu.total_tokens ?? (cbPrompt + cbCompletion)
-      }
-    },
-    handleChatModelEnd(output: any) {
-      const tu = output?.llmOutput?.tokenUsage
-      if (tu) {
-        cbPrompt = tu.promptTokens ?? tu.prompt_tokens ?? 0
-        cbCompletion = tu.completionTokens ?? tu.completion_tokens ?? 0
-        cbTotal = tu.totalTokens ?? tu.total_tokens ?? (cbPrompt + cbCompletion)
-      }
-    },
-  }
-
-  const response = await llm.invoke(messages as any, { callbacks: [usageCallback] })
-
-  const usageMeta = (response as any).usage_metadata
-  const resMeta = (response as any).response_metadata?.tokenUsage ?? (response as any).response_metadata?.token_usage
-
-  const promptTokens = cbPrompt || usageMeta?.input_tokens || resMeta?.promptTokens || resMeta?.prompt_tokens || 0
-  const completionTokens = cbCompletion || usageMeta?.output_tokens || resMeta?.completionTokens || resMeta?.completion_tokens || 0
-  const totalTokens = cbTotal || usageMeta?.total_tokens || resMeta?.totalTokens || resMeta?.total_tokens || (promptTokens + completionTokens)
-
-  if (totalTokens > 0) {
+  const usage = completion.usage
+  if (usage) {
     prisma.aIUsageLog.create({
-      data: { organizationId, feature, model, provider, promptTokens, completionTokens, totalTokens },
+      data: {
+        organizationId,
+        feature,
+        model,
+        provider,
+        promptTokens: usage.prompt_tokens,
+        completionTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens,
+      },
     }).catch(() => {})
   }
 
-  return response
+  const content = completion.choices[0]?.message?.content || ""
+  return { content, text: content }
 }
