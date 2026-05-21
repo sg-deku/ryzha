@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Plus, X, Send, Loader2, Trash2, Bot, User, ChevronDown } from "lucide-react"
+import { Sparkles, X, Send, Loader2, Trash2, Bot, User, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 
@@ -231,14 +231,22 @@ export function FloatingAIChat() {
 
       <Button
         onClick={() => setOpen((v) => !v)}
-        size="icon"
         className={cn(
-          "fixed bottom-4 right-4 z-50 h-14 w-14 rounded-full shadow-lg transition-all duration-200",
-          open ? "rotate-45" : "rotate-0"
+          "fixed bottom-4 right-4 z-50 shadow-lg transition-all duration-200",
+          open
+            ? "h-10 w-10 rounded-full p-0"
+            : "h-12 rounded-full px-5 gap-2 text-sm font-semibold"
         )}
         title={open ? "Close chat" : "Ask Ryzha AI"}
       >
-        {open ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+        {open ? (
+          <X className="h-5 w-5" />
+        ) : (
+          <>
+            <Sparkles className="h-4 w-4" />
+            Ask Ryzha
+          </>
+        )}
       </Button>
     </>
   )
