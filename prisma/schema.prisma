@@ -439,6 +439,7 @@ model Notification {
   type           String   // "INFO", "SUCCESS", "WARNING", "ERROR"
   title          String
   message        String
+  link           String?  // Optional URL to redirect to
   read           Boolean  @default(false)
   organizationId String
   createdAt      DateTime @default(now())

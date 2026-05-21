@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Bell } from "lucide-react"
+import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatDistanceToNow } from "date-fns"
 
 interface Notification {
@@ -20,6 +20,7 @@ interface Notification {
   title: string
   message: string
   type: string
+  link?: string
   read: boolean
   createdAt: string
 }
@@ -27,6 +28,7 @@ interface Notification {
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const router = useRouter()
 
   useEffect(() => {
     async function fetchNotifications() {
@@ -48,15 +50,21 @@ export function NotificationBell() {
     return () => clearInterval(interval)
   }, [])
 
-  const markAsRead = async (id: string) => {
-    try {
-      await fetch(`/api/notifications/${id}/read`, { method: "PUT" })
-      setNotifications(prev => 
-        prev.map(n => n.id === id ? { ...n, read: true } : n)
-      )
-      setUnreadCount(prev => Math.max(0, prev - 1))
-    } catch (err) {
-      console.error("Failed to mark notification as read", err)
+  const markAsReadAndNavigate = async (notification: Notification) => {
+    if (!notification.read) {
+      try {
+        await fetch(`/api/notifications/${notification.id}/read`, { method: "PUT" })
+        setNotifications(prev => 
+          prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+        )
+        setUnreadCount(prev => Math.max(0, prev - 1))
+      } catch (err) {
+        console.error("Failed to mark notification as read", err)
+      }
+    }
+    
+    if (notification.link) {
+      router.push(notification.link)
     }
   }
 
@@ -85,19 +93,19 @@ export function NotificationBell() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <ScrollArea className="h-80">
+        <div className="max-h-80 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
+            <div className="flex h-32 items-center justify-center p-4 text-sm text-muted-foreground">
               No notifications
             </div>
           ) : (
             notifications.map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
-                className={`flex flex-col items-start gap-1 p-4 ${
+                className={`flex flex-col items-start gap-1 p-4 cursor-pointer ${
                   !notification.read ? "bg-muted/50" : ""
                 }`}
-                onClick={() => markAsRead(notification.id)}
+                onClick={() => markAsReadAndNavigate(notification)}
               >
                 <div className="flex w-full items-center justify-between">
                   <span className="font-semibold">{notification.title}</span>
@@ -111,7 +119,7 @@ export function NotificationBell() {
               </DropdownMenuItem>
             ))
           )}
-        </ScrollArea>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )
