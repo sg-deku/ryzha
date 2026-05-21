@@ -22,7 +22,19 @@ export async function GET() {
     return NextResponse.json({ widgets: DEFAULT_WIDGET_CONFIG })
   }
 
-  return NextResponse.json({ widgets: layout.widgets })
+  const saved = layout.widgets as any[]
+  const savedIds = new Set(saved.map((w: any) => w.id))
+  const maxOrder = saved.reduce((m: number, w: any) => Math.max(m, w.order ?? 0), 0)
+  let nextOrder = maxOrder + 1
+  const merged = [
+    ...saved,
+    ...DEFAULT_WIDGET_CONFIG.filter((w) => !savedIds.has(w.id)).map((w) => ({
+      ...w,
+      order: nextOrder++,
+    })),
+  ]
+
+  return NextResponse.json({ widgets: merged })
 }
 
 export async function PUT(req: Request) {

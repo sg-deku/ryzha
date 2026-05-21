@@ -12,6 +12,7 @@ import { AgentLogWidget } from "./components/widgets/AgentLogWidget"
 import { AnomalyAlertsWidget } from "./components/widgets/AnomalyAlertsWidget"
 import { RecentTransactionsWidget } from "./components/widgets/RecentTransactionsWidget"
 import { RealTimePLWidget } from "./components/widgets/RealTimePLWidget"
+import { AIUsageWidget } from "./components/widgets/AIUsageWidget"
 
 interface DashboardClientProps {
   userName: string | null | undefined
@@ -52,12 +53,14 @@ function renderWidget(
       return <AnomalyAlertsWidget key={widget.id} />
     case "recent_transactions":
       return <RecentTransactionsWidget key={widget.id} />
+    case "ai_usage":
+      return <AIUsageWidget key={widget.id} />
     default:
       return null
   }
 }
 
-const PAIRED_WIDGETS = new Set(["cash_flow", "agent_log", "anomaly_alerts", "recent_transactions"])
+const PAIRED_WIDGETS = new Set(["cash_flow", "agent_log", "anomaly_alerts", "recent_transactions", "ai_usage"])
 
 export function DashboardClient({
   userName,

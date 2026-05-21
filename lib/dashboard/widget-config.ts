@@ -13,6 +13,7 @@ export const DEFAULT_WIDGET_CONFIG: WidgetConfig[] = [
   { id: "agent_log", visible: true, order: 5 },
   { id: "anomaly_alerts", visible: true, order: 6 },
   { id: "recent_transactions", visible: true, order: 7 },
+  { id: "ai_usage", visible: true, order: 8 },
 ]
 
 export const WIDGET_META: Record<string, { title: string; description: string }> = {
@@ -23,4 +24,5 @@ export const WIDGET_META: Record<string, { title: string; description: string }>
   agent_log: { title: "Agent Log", description: "Recent agent activity feed" },
   anomaly_alerts: { title: "Expense Anomalies", description: "AI-detected expense anomalies" },
   recent_transactions: { title: "Recent Transactions", description: "Latest reconciled transactions" },
+  ai_usage: { title: "AI Token Usage", description: "Today / this month / all-time token consumption" },
 }

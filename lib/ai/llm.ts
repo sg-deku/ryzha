@@ -99,31 +99,44 @@ export async function callLLM(
   const provider = settings?.aiProvider || detectAvailableProvider()
   const model = settings?.aiModel || defaultModelForProvider(provider)
 
-  const llm = await getLLM(organizationId, options)
-  const response = await llm.invoke(messages as any)
+  const { modelName: _mn, model: _m, temperature: _t, ...safeOptions } = options
+  const llm = await getLLM(organizationId, safeOptions)
 
-  const usage = (response as any).usage_metadata as
-    | { input_tokens?: number; output_tokens?: number; total_tokens?: number }
-    | undefined
-  const tokenUsage = (response as any).response_metadata?.token_usage as
-    | { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
-    | undefined
+  let cbPrompt = 0
+  let cbCompletion = 0
+  let cbTotal = 0
 
-  const promptTokens = usage?.input_tokens ?? tokenUsage?.prompt_tokens ?? 0
-  const completionTokens = usage?.output_tokens ?? tokenUsage?.completion_tokens ?? 0
-  const totalTokens = usage?.total_tokens ?? tokenUsage?.total_tokens ?? (promptTokens + completionTokens)
+  const usageCallback = {
+    handleLLMEnd(output: any) {
+      const tu = output?.llmOutput?.tokenUsage
+      if (tu) {
+        cbPrompt = tu.promptTokens ?? tu.prompt_tokens ?? 0
+        cbCompletion = tu.completionTokens ?? tu.completion_tokens ?? 0
+        cbTotal = tu.totalTokens ?? tu.total_tokens ?? (cbPrompt + cbCompletion)
+      }
+    },
+    handleChatModelEnd(output: any) {
+      const tu = output?.llmOutput?.tokenUsage
+      if (tu) {
+        cbPrompt = tu.promptTokens ?? tu.prompt_tokens ?? 0
+        cbCompletion = tu.completionTokens ?? tu.completion_tokens ?? 0
+        cbTotal = tu.totalTokens ?? tu.total_tokens ?? (cbPrompt + cbCompletion)
+      }
+    },
+  }
+
+  const response = await llm.invoke(messages as any, { callbacks: [usageCallback] })
+
+  const usageMeta = (response as any).usage_metadata
+  const resMeta = (response as any).response_metadata?.tokenUsage ?? (response as any).response_metadata?.token_usage
+
+  const promptTokens = cbPrompt || usageMeta?.input_tokens || resMeta?.promptTokens || resMeta?.prompt_tokens || 0
+  const completionTokens = cbCompletion || usageMeta?.output_tokens || resMeta?.completionTokens || resMeta?.completion_tokens || 0
+  const totalTokens = cbTotal || usageMeta?.total_tokens || resMeta?.totalTokens || resMeta?.total_tokens || (promptTokens + completionTokens)
 
   if (totalTokens > 0) {
     prisma.aIUsageLog.create({
-      data: {
-        organizationId,
-        feature,
-        model,
-        provider,
-        promptTokens,
-        completionTokens,
-        totalTokens,
-      },
+      data: { organizationId, feature, model, provider, promptTokens, completionTokens, totalTokens },
     }).catch(() => {})
   }
 

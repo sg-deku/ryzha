@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { FileText, PieChart, TrendingUp, Landmark, ArrowRight } from "lucide-react"
+import { FileText, PieChart, TrendingUp, Landmark, ArrowRight, BarChart3, BookOpen } from "lucide-react"
 
 export function StandardReports() {
   const reports: any[] = [
@@ -36,6 +36,22 @@ export function StandardReports() {
       icon: FileText,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
+    },
+    {
+      title: "Profit & Loss",
+      description: "Real-time and monthly P&L with revenue, expenses, net income, and gross margin.",
+      href: "/reports/profit-loss",
+      icon: BarChart3,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-100",
+    },
+    {
+      title: "General Ledger",
+      description: "Unified ledger of all transactions across invoices, expenses, vendors, and Stripe.",
+      href: "/reports/general-ledger",
+      icon: BookOpen,
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-100",
     },
   ]
 
