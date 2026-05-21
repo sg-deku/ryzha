@@ -81,7 +81,7 @@ export async function getAIClientConfig(organizationId: string): Promise<AIClien
 export async function invokeAI(
   organizationId: string,
   prompt: string,
-  options: { temperature?: number; json?: boolean } = {}
+  options: { temperature?: number; json?: boolean; feature?: string } = {}
 ): Promise<string> {
   const { client, model, provider } = await getAIClientConfig(organizationId)
 
@@ -92,6 +92,21 @@ export async function invokeAI(
     temperature: options.temperature ?? 0.2,
     ...(options.json && supportsJsonMode ? { response_format: { type: "json_object" } } : {}),
   })
+
+  const usage = completion.usage
+  if (usage && organizationId) {
+    prisma.aIUsageLog.create({
+      data: {
+        organizationId,
+        feature: options.feature ?? "unknown",
+        model,
+        provider,
+        promptTokens: usage.prompt_tokens,
+        completionTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens,
+      },
+    }).catch(() => {})
+  }
 
   return completion.choices[0]?.message?.content || ""
 }

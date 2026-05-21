@@ -64,7 +64,7 @@ ${historyContext ? `Recent conversation:\n${historyContext}\n\n` : ""}User: ${me
 
   let reply: string
   try {
-    reply = await invokeAI(orgId, systemPrompt, { temperature: 0.4 })
+    reply = await invokeAI(orgId, systemPrompt, { temperature: 0.4, feature: "chat" })
   } catch (err) {
     console.error("[chat] AI error:", err)
     reply = "I'm having trouble connecting to the AI service. Please check your AI configuration in Settings → Financial Engine."

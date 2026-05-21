@@ -81,7 +81,7 @@ For runway and ar_aging, parameters can be an empty object {}.
 If the question cannot be mapped, return {"error":"unknown"}.`
 
   try {
-    const content = await invokeAI(organizationId, prompt, { temperature: 0, json: true })
+    const content = await invokeAI(organizationId, prompt, { temperature: 0, json: true, feature: "report_query" })
     console.log("[query-parser] LLM response:", content)
 
     const result = extractJSON(content)

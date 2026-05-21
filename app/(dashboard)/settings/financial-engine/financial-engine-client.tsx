@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -14,6 +14,9 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { BarChart2, Zap, MessageSquare, FileSearch, Bot, RefreshCw } from "lucide-react"
 
 const financialSettingsSchema = z.object({
   baseCurrency: z.string().min(1),
@@ -48,9 +51,47 @@ const financialSettingsSchema = z.object({
 
 type FinancialSettingsValues = z.infer<typeof financialSettingsSchema>
 
+interface AIUsageData {
+  allTime: { totalTokens: number; promptTokens: number; completionTokens: number; calls: number }
+  thisMonth: { totalTokens: number; calls: number }
+  today: { totalTokens: number; calls: number }
+  byFeature: { feature: string; totalTokens: number; calls: number }[]
+  monthlyTrend: { month: string; tokens: number }[]
+}
+
+const FEATURE_META: Record<string, { label: string; icon: React.ReactNode }> = {
+  chat: { label: "AI Chat", icon: <MessageSquare className="h-3.5 w-3.5" /> },
+  report_query: { label: "Report Queries", icon: <FileSearch className="h-3.5 w-3.5" /> },
+  report_narrative: { label: "Report Narratives", icon: <Bot className="h-3.5 w-3.5" /> },
+  unknown: { label: "Other", icon: <Zap className="h-3.5 w-3.5" /> },
+}
+
+function fmtTokens(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return String(n)
+}
+
 export default function FinancialEngineClient({ initialData }: { initialData: any }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [aiUsage, setAiUsage] = useState<AIUsageData | null>(null)
+  const [usageLoading, setUsageLoading] = useState(false)
+
+  const fetchUsage = useCallback(async () => {
+    setUsageLoading(true)
+    try {
+      const res = await fetch("/api/settings/ai-usage")
+      if (res.ok) setAiUsage(await res.json())
+    } finally {
+      setUsageLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchUsage()
+  }, [])
+
   const [categoriesStr, setCategoriesStr] = useState(() => {
     try {
       const cats = initialData?.expenseCategories;
@@ -310,6 +351,101 @@ export default function FinancialEngineClient({ initialData }: { initialData: an
                     Specify the embedding model. If using Ollama, ensure you have pulled it (e.g. <code>ollama pull nomic-embed-text</code>).
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart2 className="h-5 w-5" />
+                    Token Usage
+                  </CardTitle>
+                  <CardDescription>AI token consumption across all features for your organization.</CardDescription>
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchUsage} disabled={usageLoading}>
+                  <RefreshCw className={`h-4 w-4 ${usageLoading ? "animate-spin" : ""}`} />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {usageLoading && !aiUsage ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                  </div>
+                ) : aiUsage ? (
+                  <>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="rounded-lg border bg-muted/30 p-3 text-center">
+                        <p className="text-xs text-muted-foreground mb-1">Today</p>
+                        <p className="text-2xl font-bold">{fmtTokens(aiUsage.today.totalTokens)}</p>
+                        <p className="text-xs text-muted-foreground">{aiUsage.today.calls} calls</p>
+                      </div>
+                      <div className="rounded-lg border bg-muted/30 p-3 text-center">
+                        <p className="text-xs text-muted-foreground mb-1">This Month</p>
+                        <p className="text-2xl font-bold">{fmtTokens(aiUsage.thisMonth.totalTokens)}</p>
+                        <p className="text-xs text-muted-foreground">{aiUsage.thisMonth.calls} calls</p>
+                      </div>
+                      <div className="rounded-lg border bg-muted/30 p-3 text-center">
+                        <p className="text-xs text-muted-foreground mb-1">All Time</p>
+                        <p className="text-2xl font-bold">{fmtTokens(aiUsage.allTime.totalTokens)}</p>
+                        <p className="text-xs text-muted-foreground">{aiUsage.allTime.calls} calls</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Prompt vs Completion (All Time)</p>
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-primary inline-block" />
+                          Prompt: <strong>{fmtTokens(aiUsage.allTime.promptTokens)}</strong>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground inline-block" />
+                          Completion: <strong>{fmtTokens(aiUsage.allTime.completionTokens)}</strong>
+                        </span>
+                      </div>
+                    </div>
+
+                    {aiUsage.byFeature.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">This Month by Feature</p>
+                        <div className="space-y-2">
+                          {aiUsage.byFeature.map((f) => {
+                            const meta = FEATURE_META[f.feature] ?? FEATURE_META.unknown
+                            const pct = aiUsage.thisMonth.totalTokens > 0
+                              ? Math.round((f.totalTokens / aiUsage.thisMonth.totalTokens) * 100)
+                              : 0
+                            return (
+                              <div key={f.feature} className="space-y-1">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                                    {meta.icon}
+                                    {meta.label}
+                                  </span>
+                                  <span className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="text-xs font-mono">{fmtTokens(f.totalTokens)}</Badge>
+                                    <span className="text-xs text-muted-foreground w-8 text-right">{pct}%</span>
+                                  </span>
+                                </div>
+                                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {aiUsage.byFeature.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No AI usage recorded this month. Start using AI features to see consumption here.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">Failed to load usage data.</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

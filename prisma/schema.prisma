@@ -50,6 +50,7 @@ model Organization {
   o2cSettings      O2CSettings?
 
   dashboardLayouts DashboardLayout[]
+  aiUsageLogs      AIUsageLog[]
 
   // GL Models
   glEntries        GeneralLedgerEntry[]
@@ -575,6 +576,23 @@ model ChartOfAccounts {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([organizationId, accountName])
+}
+
+model AIUsageLog {
+  id               String   @id @default(cuid())
+  organizationId   String
+  feature          String
+  model            String
+  provider         String
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  organization     Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, feature])
 }
 
 model ChatMessage {
